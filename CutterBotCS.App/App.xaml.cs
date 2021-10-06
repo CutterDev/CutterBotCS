@@ -62,7 +62,7 @@ namespace CutterBotCS.App
 
             JsonHelper.SerializeToFile(config, Path.Combine(m_ConfigDir, CONFIG_NAME));
 
-            DiscordBot.RiotHandler.Leaderboards.Save();
+            DiscordBot.RiotHandler.PManager.Save();
         }
     }
 }

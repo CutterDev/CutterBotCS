@@ -1,4 +1,5 @@
-﻿using CutterBotCS.Helpers;
+﻿using Camille.Enums;
+using CutterBotCS.Helpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace CutterBotCS.Modules.Riot
 {
-    public class Leaderboard
+    public class PlayerManager
     {
         /// <summary>
         /// Players SummonerName, EncryptedSummonerId
@@ -23,7 +24,7 @@ namespace CutterBotCS.Modules.Riot
         /// <summary>
         /// Ctor
         /// </summary>
-        public Leaderboard(string path)
+        public PlayerManager(string path)
         {
             FilePath = path;
         }
@@ -52,6 +53,45 @@ namespace CutterBotCS.Modules.Riot
         }
 
         /// <summary>
+        /// Player Exists
+        /// </summary>
+        public bool PlayerExists(ulong discordid)
+        {
+            bool result = false;
+            foreach(Player player in Players)
+            {
+                if (player.DiscordId == discordid)
+                {
+                    result = true;
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Try Get Player
+        /// </summary>
+        public bool TryGetPlayer(ulong discordid, out Player player)
+        {
+            bool result = false;
+            player = null;
+
+            foreach(Player p in Players)
+            {
+                if (p.DiscordId == discordid)
+                {
+                    player = p;
+                    result = true;
+                    break;
+                }
+            }
+            
+            return result;
+        }
+
+        /// <summary>
         /// Save
         /// </summary>
         public void Save()
@@ -65,6 +105,11 @@ namespace CutterBotCS.Modules.Riot
     /// </summary>
     public class Player
     {
+        /// <summary>
+        /// Discord Id
+        /// </summary>
+        public ulong DiscordId { get; set; }
+
         /// <summary>
         /// Summoner Name
         /// </summary>
@@ -99,6 +144,11 @@ namespace CutterBotCS.Modules.Riot
         /// Summoner Level
         /// </summary>
         public long SummonerLevel { get; set; }
+
+        /// <summary>
+        /// Platform Route
+        /// </summary>
+        public PlatformRoute Route { get; set; }
 
         /// <summary>
         /// Player

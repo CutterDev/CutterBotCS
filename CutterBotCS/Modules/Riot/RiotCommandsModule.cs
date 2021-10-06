@@ -10,6 +10,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using Camille.RiotGames.LeagueV4;
 using CutterBotCS.Helpers;
+using Camille.RiotGames.SummonerV4;
+using Camille.Enums;
 
 namespace CutterBotCS.Modules.Riot
 {
@@ -18,48 +20,91 @@ namespace CutterBotCS.Modules.Riot
 
         [Command("Riot Mastery")]
         [Summary("Gets top 10 Champion Masteries of a player")]
-        public Task ChampionsAsync(string summonerid)
+        public async Task UnregisteredMasteries(string summonername)
         {
-            StringBuilder message = new StringBuilder();
-            message.Append("No Champions for this Summoner found try again.");
-            if (!string.IsNullOrWhiteSpace(summonerid))
+            string message = string.Empty;
+            if (string.IsNullOrWhiteSpace(summonername))
             {
-                List<string> champions = DiscordBot.RiotHandler.GetTopSummonerMasteries(summonerid);
-                if (champions.Count > 0)
-                {
-                    message.Clear();
-                    message.AppendLine(string.Format("== {0} Top 10 Champion Masteries ==", summonerid));
-                    foreach (string champion in champions)
-                    {
-                        message.AppendLine(champion);
-                    }
-
-                }
+                message = "Summoner ID empty";
             }
-            return ReplyAsync(message.ToString());
+            else
+            {
+                List<string> champions = await DiscordBot.RiotHandler.GetTopSummonerMasteriesAsync(summonername);
+                message = ChampionMasteries(champions, summonername);
+            }
+
+            await ReplyAsync(message);
         }
 
-        [Command("Riot History")]
-        [Summary("Get most recent 10 games of a player")]
-        public async Task MatchHistoryAsync(string summonerid)
+        /// <summary>
+        /// Registered Masteries
+        /// </summary>
+        
+        [Command("mastery")]
+        [Summary("Gets top 10 Champion Masteries for Registered Player")]
+        public async Task RegisteredMasteries()
+        {
+            string message = string.Empty;
+            Player player;
+            if (DiscordBot.RiotHandler.PManager.TryGetPlayer(Context.User.Id, out player))
+            {
+                List<string> champions = await DiscordBot.RiotHandler.GetTop10MasteriesByIdAsync(player.Id, player.Route);
+                message = ChampionMasteries(champions, player.SummonerName);
+            }
+            else
+            {
+                message = "Player does not have a Summoner Registered";
+            }
+
+            await ReplyAsync(message);
+        }
+
+        /// <summary>
+        /// ChampionMasteriesAsync
+        /// </summary>
+        string ChampionMasteries(List<string> champions, string summonername)
         {
             StringBuilder message = new StringBuilder();
-            message.Append("No Match History for this Summoner found try again.");
-            if (!string.IsNullOrWhiteSpace(summonerid))
-            {
-                List<string> history = await DiscordBot.RiotHandler.GetRankedHistoryAsync(summonerid);
-                if (history.Count > 0)
-                {
-                    message.Clear();
-                    message.AppendLine(string.Format("== {0} 10 Most Recent Ranked Games ==", summonerid));
-                    foreach (string match in history)
-                    {
-                        message.AppendLine(match);
-                    }
 
+            if (champions.Count > 0)
+            {
+                message.Clear();
+                message.AppendLine(string.Format("== {0} Top 10 Champion Masteries ==", summonername));
+                foreach (string champion in champions)
+                {
+                    message.AppendLine(champion);
                 }
+
             }
-            await ReplyAsync(message.ToString());
+            
+            return message.ToString();
+        }
+
+        [Command("RiotEUW History")]
+        [Summary("Get most recent 10 games of a player")]
+        public async Task MatchHistoryEUWAsync(string summonername)
+        {
+            string message = await MatchHistoryAsync(summonername, PlatformRoute.EUW1, RegionalRoute.EUROPE);
+
+            await ReplyAsync(message);
+        }
+
+        [Command("RiotEUNE History")]
+        [Summary("Get most recent 10 games of a player")]
+        public async Task MatchHistoryEUNEAsync(string summonername)
+        {
+            string message = await MatchHistoryAsync(summonername, PlatformRoute.EUN1, RegionalRoute.EUROPE);
+
+            await ReplyAsync(message);
+        }
+
+        [Command("RiotNA History")]
+        [Summary("Get most recent 10 games of a player")]
+        public async Task MatchHistoryNAAsync(string summonername)
+        {
+            string message = await MatchHistoryAsync(summonername, PlatformRoute.NA1, RegionalRoute.EUROPE);
+
+            await ReplyAsync(message);
         }
 
         [Command("leaderboard")]
@@ -78,48 +123,120 @@ namespace CutterBotCS.Modules.Riot
             await Context.Channel.SendFileAsync(image, string.Empty);
         }
 
-        [Command("register")]
+        [Command("registereuw")]
         [Summary("Register to leaderboard for Ranked Solo")]
         [RequireRoleAttribute(DiscordBot.BOYZ)]
-        public async Task RegisterLeaderboard(string name)
+        public async Task RegisterPlayerEUW(string name)
         {
-            if(string.IsNullOrWhiteSpace(name))
+            string message = await RegisterPlayerAsync(name, PlatformRoute.EUW1);
+
+            await ReplyAsync(message);
+        }
+
+        [Command("registerna")]
+        [Summary("Register to leaderboard for Ranked Solo")]
+        [RequireRoleAttribute(DiscordBot.BOYZ)]
+        public async Task RegisterPlayerNA(string name)
+        {
+            string message = await RegisterPlayerAsync(name, PlatformRoute.NA1);
+            await ReplyAsync(message);
+        }
+
+        [Command("registereune")]
+        [Summary("Register to leaderboard for Ranked Solo")]
+        [RequireRoleAttribute(DiscordBot.BOYZ)]
+        public async Task RegisterPlayerEUNE(string name)
+        {
+            string message = await RegisterPlayerAsync(name, PlatformRoute.EUN1);
+            await ReplyAsync(message);
+        }
+
+        /// <summary>
+        /// Match History Asynchronous
+        /// </summary>
+        public async Task<string> MatchHistoryAsync(string name, PlatformRoute pr, RegionalRoute rr)
+        {
+            StringBuilder message = new StringBuilder();
+            message.Append("No Match History for this Summoner found try again.");
+            if (!string.IsNullOrWhiteSpace(name))
             {
-                await ReplyAsync("Please Submit a name.");
+                List<string> history = await DiscordBot.RiotHandler.GetRankedHistoryByNameAsync(name, pr, rr);
+                if (history.Count > 0)
+                {
+                    message.Clear();
+                    message.AppendLine(string.Format("== {0} 10 Most Recent Ranked Games ==", name));
+                    foreach (string match in history)
+                    {
+                        message.AppendLine(match);
+                    }
+
+                }
             }
-            else if (DiscordBot.RiotHandler.Leaderboards.Players.Where(p => p.SummonerName.ToLower() == name.ToLower()).Count() > 0)
+            return message.ToString();
+        }
+
+        /// <summary>
+        /// Register Player with Platform 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="pr"></param>
+        /// <returns></returns>
+        public async Task<string> RegisterPlayerAsync(string name, PlatformRoute pr)
+        {
+            string message = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(name))
             {
-                await ReplyAsync("Summoner already Exists");
+                message = "Please Submit a name.";
+            }
+            else if (Discord.DiscordBot.RiotHandler.PManager.PlayerExists(Context.User.Id))
+            {
+                message = "You already registered an Account";
             }
             else
             {
-                DiscordBot.RiotHandler.Leaderboards.Players.Add(new Player() { SummonerName = name });
+                Summoner summoner = await DiscordBot.RiotHandler.GetSummonerAsync(pr, name);
 
-                await ReplyAsync(string.Format("Summoner {0} has been registered! Welcome to the leaderboard", name));
-            }
-        }
-
-        [Command("remove")]
-        [Summary("Remove Summoner from leaderboard for Ranked Solo")]
-        [RequireRole("Mod")]
-        public async Task RemoveLeaderboard(string name)
-        {
-            if (Context.User.Id == DiscordBot.ETHAN)
-            {
-                if (string.IsNullOrWhiteSpace(name))
+                if (summoner != null)
                 {
-                    await ReplyAsync("Please pick a name to remove");
+                    Player player = new Player()
+                    {
+                        DiscordId = Context.User.Id,
+                        SummonerName = summoner.Name,
+                        AccountId = summoner.AccountId,
+                        Id = summoner.Id,
+                        ProfileIconId = summoner.ProfileIconId,
+                        Route = pr,
+                        Puuid = summoner.Puuid,
+                        RevisionDate = summoner.RevisionDate
+                    };
+                    DiscordBot.RiotHandler.PManager.Players.Add(player);
+                    await ReplyAsync(string.Format("Summoner {0} has been registered!", player.SummonerName));
                 }
                 else
                 {
-                    DiscordBot.RiotHandler.Leaderboards.Players.Remove(DiscordBot.RiotHandler.Leaderboards.Players.Where(p => p.SummonerName.ToLower() == name.ToLower()).First());
-
-                    await ReplyAsync(string.Format("Summoner {0} has been removed!", name));
+                    message = "Player does not exist, register another.";
                 }
+            }
+
+            return message;
+        }
+
+        [Command("remove")]
+        [Summary("Remove User who called the command's Summoner.")]
+        public async Task RemovePlayer()
+        {
+            List<Player> players = DiscordBot.RiotHandler.PManager.Players.Where(p => p.DiscordId == Context.User.Id).ToList();
+            if (players.Count > 0)
+            {
+                DiscordBot.RiotHandler.PManager.Players.Remove(players[0]);
+                await ReplyAsync(string.Format("Summoner {0} has been removed!", players[0].SummonerName));
             }
             else
             {
-                await ReplyAsync("YOU ARE NOT ETHAN. FECK OFF!");
+                await ReplyAsync("You do not have a Summoner Registered");
+
+
             }
         }
     }
