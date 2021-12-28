@@ -1,6 +1,5 @@
 ﻿using System.Threading;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media;
 using CutterBotCS.Discord;
 
@@ -22,6 +21,7 @@ namespace CutterBotCS.App
         public MainWindow()
         {
             InitializeComponent();
+            m_DiscordBot = new DiscordBot();
         }
 
         /// <summary>
@@ -40,12 +40,14 @@ namespace CutterBotCS.App
         /// </summary>
         private async void Login_Click(object sender, RoutedEventArgs e)
         {
-            m_DiscordBot = new DiscordBot();
             m_DiscordBot.connected += DiscordBot_Connected;
 
             await m_DiscordBot.Initialize();
         }
 
+        /// <summary>
+        /// Config Click
+        /// </summary>
         private void Config_Click(object sender, RoutedEventArgs e)
         {
             ConfigWindow cw = new ConfigWindow();

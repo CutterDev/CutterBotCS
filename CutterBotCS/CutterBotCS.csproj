@@ -183,7 +183,8 @@
     <Compile Include="Modules\Riot\PlayerManager.cs" />
     <Compile Include="Modules\Riot\RiotCommandsModule.cs" />
     <Compile Include="Modules\RequireRoleAttribute.cs" />
-    <Compile Include="Modules\SimpleCommandsModule.cs" />
+    <Compile Include="Modules\Simple\HelpCommands.cs" />
+    <Compile Include="Modules\Simple\SimpleCommandsModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

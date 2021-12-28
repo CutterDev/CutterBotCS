@@ -12,6 +12,7 @@ namespace CutterBotCS.RiotAPI
 {
     public class APIHandler
     {
+        string m_PlayersPath;
         RiotGamesApi m_RiotInstance;
         public PlayerManager PManager;
 
@@ -54,8 +55,7 @@ namespace CutterBotCS.RiotAPI
         /// </summary>
         public APIHandler(string playerspath)
         {
-            string riottoken = Properties.Settings.Default.RiotApiToken;
-            m_RiotInstance = RiotGamesApi.NewInstance(riottoken);
+            m_PlayersPath = playerspath;
             PManager = new PlayerManager(playerspath);
         }
 
@@ -64,6 +64,8 @@ namespace CutterBotCS.RiotAPI
         /// </summary>
         public void Initialize()
         {
+            string riottoken = Properties.Settings.Default.RiotApiToken;
+            m_RiotInstance = RiotGamesApi.NewInstance(riottoken);
             PManager.Initialize();
         }
 
@@ -116,7 +118,7 @@ namespace CutterBotCS.RiotAPI
         /// </summary>
         /// <param name="summonername"></param>
         /// <returns></returns>
-        public async Task<List<string>> GetTopSummonerMasteriesAsync(string summonername)
+        public async Task<List<string>> GetTopSummonerMasteriesAsync(string summonername, PlatformRoute pr)
         {
             List<string> champions = new List<string>();
 
@@ -125,7 +127,7 @@ namespace CutterBotCS.RiotAPI
 
             if (summoner != null)
             {
-                var masteries = await m_RiotInstance.ChampionMasteryV4().GetAllChampionMasteriesAsync(PlatformRoute.EUW1, summoner.Id);
+                var masteries = await m_RiotInstance.ChampionMasteryV4().GetAllChampionMasteriesAsync(pr, summoner.Id);
 
                 if (masteries != null)
                 {
@@ -195,6 +197,9 @@ namespace CutterBotCS.RiotAPI
             return boys;
         }
 
+        /// <summary>
+        /// Get Ranked History By ID Async
+        /// </summary>
         public async Task<List<string>> GetRankedHistoryByIdAsync(string id, PlatformRoute pr, RegionalRoute rr)
         {
             var summonerData = await m_RiotInstance.SummonerV4().GetBySummonerIdAsync(pr, id);
@@ -213,6 +218,9 @@ namespace CutterBotCS.RiotAPI
             return await GetRankedHistoryAsync(rr, summonerData);
         }
 
+        /// <summary>
+        /// Get Ranked History ASync
+        /// </summary>
         async Task<List<string>> GetRankedHistoryAsync(RegionalRoute rr, Summoner summonerdata)
         {
             List<string> matchhistory = new List<string>();
@@ -245,11 +253,27 @@ namespace CutterBotCS.RiotAPI
                     var k = participant.Kills;
                     var d = participant.Deaths;
                     var a = participant.Assists;
-                    var kda = (k + a) / (float)d;
+
+                    string gamemode;
+
+                    switch (matchData.Info.QueueId)
+                    {
+                        case Queue.SUMMONERS_RIFT_5V5_RANKED_SOLO:
+                            gamemode = "SOLO";
+                            break;
+                        case Queue.SUMMONERS_RIFT_5V5_RANKED_FLEX:
+                            gamemode = "FLEX";
+                            break;
+                        default:
+                            gamemode = string.Empty;
+                            break;
+                    }
+
+                    var kda = d == 0 ? k + a : (k + a) / (float)d;
 
                     // Win/Loss, Champion
                     // Champion, K/D/A
-                    string matchhistorymsg = string.Format("{0,3}) {1,-4} ({2})", i + 1, win ? "Win" : "Loss", champ) +
+                    string matchhistorymsg = string.Format("{0} - {1,3}) {2,-4} ({3})", gamemode, i + 1, win ? "Win" : "Loss", champ) +
                                           string.Format("     K/D/A {0}/{1}/{2} ({3:0.00})", k, d, a, kda);
 
                     matchhistory.Add(matchhistorymsg);
