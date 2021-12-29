@@ -140,30 +140,6 @@ namespace CutterBotCS.Modules.Riot
         #region History Commands
 
         /// <summary>
-        /// Match History Asynchronous
-        /// </summary>
-        public async Task<string> MatchHistoryAsync(string name, PlatformRoute pr, RegionalRoute rr)
-        {
-            StringBuilder message = new StringBuilder();
-            message.Append("No Match History for this Summoner found try again.");
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                List<string> history = await DiscordBot.RiotHandler.GetRankedHistoryByNameAsync(name, pr, rr);
-                if (history.Count > 0)
-                {
-                    message.Clear();
-                    message.AppendLine(string.Format("== {0} 10 Most Recent Ranked Games ==", name));
-                    foreach (string match in history)
-                    {
-                        message.AppendLine(match);
-                    }
-
-                }
-            }
-            return message.ToString();
-        }
-
-        /// <summary>
         /// Riot NA History to an account, e.g. !RiotEUW History [playername]
         /// </summary>
         [Command("RiotEUW History")]
@@ -197,6 +173,30 @@ namespace CutterBotCS.Modules.Riot
             string message = await MatchHistoryAsync(summonername, PlatformRoute.NA1, RegionalRoute.EUROPE);
 
             await ReplyAsync(message);
+        }
+
+        /// <summary>
+        /// Match History Asynchronous
+        /// </summary>
+        public async Task<string> MatchHistoryAsync(string name, PlatformRoute pr, RegionalRoute rr)
+        {
+            StringBuilder message = new StringBuilder();
+            message.Append("No Match History for this Summoner found try again.");
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                List<string> history = await DiscordBot.RiotHandler.GetRankedHistoryByNameAsync(name, pr, rr);
+                if (history.Count > 0)
+                {
+                    message.Clear();
+                    message.AppendLine(string.Format("== {0} 10 Most Recent Ranked Games ==", name));
+                    foreach (string match in history)
+                    {
+                        message.AppendLine(match);
+                    }
+
+                }
+            }
+            return message.ToString();
         }
 
         #endregion
