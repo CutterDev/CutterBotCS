@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Camille.Enums;
@@ -250,9 +249,9 @@ namespace CutterBotCS.RiotAPI
 
                     var win = participant.Win;
                     var champ = (Champion)participant.ChampionId;
-                    var k = participant.Kills;
-                    var d = participant.Deaths;
-                    var a = participant.Assists;
+                    var kills = participant.Kills;
+                    var deaths = participant.Deaths;
+                    var assists = participant.Assists;
 
                     string gamemode;
 
@@ -269,12 +268,11 @@ namespace CutterBotCS.RiotAPI
                             break;
                     }
 
-                    var kda = d == 0 ? k + a : (k + a) / (float)d;
+                    var kda = deaths == 0 ? kills + assists : (kills + assists) / (float)deaths;
 
-                    // Win/Loss, Champion
-                    // Champion, K/D/A
+                    // GAMEMODE - WIN/LOSS - CHAMPION - KILLS/DEATHS/ASSISTS KDA
                     string matchhistorymsg = string.Format("{0} - {1,3}) {2,-4} ({3})", gamemode, i + 1, win ? "Win" : "Loss", champ) +
-                                          string.Format("     K/D/A {0}/{1}/{2} ({3:0.00})", k, d, a, kda);
+                                          string.Format("     K/D/A {0}/{1}/{2} ({3:0.00})", kills, deaths, assists, kda);
 
                     matchhistory.Add(matchhistorymsg);
                 }
