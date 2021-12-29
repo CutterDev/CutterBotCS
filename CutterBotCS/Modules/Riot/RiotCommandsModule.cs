@@ -281,7 +281,7 @@ namespace CutterBotCS.Modules.Riot
         {
             string message = "You are not Ethan. Feck off.";
 
-            if (DiscordBot.IsEthan(id))
+            if (DiscordBot.IsEthan(Context.User.Id))
             {
                 message = await RegisterPlayerAsync(name, pr, id);
             }
