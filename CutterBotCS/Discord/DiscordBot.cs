@@ -36,9 +36,6 @@ namespace CutterBotCS.Discord
         /// </summary>
         public DiscordBot()
         {
-            m_Token = Properties.Settings.Default.DiscordToken;
-            RiotHandler = new APIHandler(LEADERBOARD_PATH);
-            m_Commands = new CommandService();
         }
 
         /// <summary>
@@ -47,6 +44,10 @@ namespace CutterBotCS.Discord
         /// <returns></returns>
         public async Task Initialize()
         {
+            m_Token = Properties.Settings.Default.DiscordToken;
+            RiotHandler = new APIHandler(LEADERBOARD_PATH);
+            m_Commands = new CommandService();
+
             //
             // Init Riot Handler
             //
@@ -90,13 +91,19 @@ namespace CutterBotCS.Discord
         /// <summary>
         /// Log
         /// </summary>
-        /// <param name="arg"></param>
-        /// <returns></returns>
         private Task Log(LogMessage arg)
         {
             // TODO: Log Something
 
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Is Id Ethan
+        /// </summary>
+        public static bool IsEthan(ulong id)
+        {
+            return id == ETHAN;
         }
     }
 }

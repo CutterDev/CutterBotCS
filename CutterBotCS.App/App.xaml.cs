@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
-using CutterBotCS.App.Properties;
 using CutterBotCS.Config;
 using CutterBotCS.Discord;
 using CutterBotCS.Helpers;
@@ -61,7 +55,7 @@ namespace CutterBotCS.App
             config.GetProperties();
 
             JsonHelper.SerializeToFile(config, Path.Combine(m_ConfigDir, CONFIG_NAME));
-
+            
             DiscordBot.RiotHandler.PManager.Save();
         }
     }
