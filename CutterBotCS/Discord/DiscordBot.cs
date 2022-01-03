@@ -1,9 +1,12 @@
-﻿using CutterBotCS.Modules;
+﻿using CutterBotCS.Config;
+using CutterBotCS.Helpers;
+using CutterBotCS.Modules;
 using CutterBotCS.RiotAPI;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace CutterBotCS.Discord
@@ -23,16 +26,22 @@ namespace CutterBotCS.Discord
         private DiscordSocketClient m_Client;
         private CommandService m_Commands;
         private string m_Token;
+        private string m_ConfigDir;
+        private string m_ConfigName;
 
-        static string LEADERBOARD_PATH = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/CutterBot/players.json";
+        static string LEADERBOARD_PATH = AppDomain.CurrentDomain.BaseDirectory + "/Configuration/players.json";
+        public static string CONFIG_DIR = AppDomain.CurrentDomain.BaseDirectory + "/Configuration";
+        public static string CONFIG_NAME = "config.json";
 
         public event ConnectedEventHandler connected;
 
         /// <summary>
         /// Ctor
         /// </summary>
-        public DiscordBot()
+        public DiscordBot(string configdir, string config)
         {
+            m_ConfigDir = configdir;
+            m_ConfigName = config;
         }
 
         /// <summary>
@@ -70,9 +79,6 @@ namespace CutterBotCS.Discord
             //
             m_CommandHandler = new CommandHandler(m_Client, m_Commands);
             await m_CommandHandler.InstallCommandsAsync();
-
-            // Block this task until the program is closed
-            await Task.Delay(-1);
         }
 
         /// <summary>
@@ -80,7 +86,11 @@ namespace CutterBotCS.Discord
         /// </summary>
         private Task Connected()
         {
-            connected();
+            if (connected != null)
+            {
+                connected();
+            }
+
 
             return Task.CompletedTask;
         }

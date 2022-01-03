@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿using CutterBotCS.Config;
+using CutterBotCS.Discord;
+using CutterBotCS.Helpers;
+using System.IO;
+using System.Text;
 
 namespace CutterBotCS.Modules.Simple
 {
@@ -27,6 +31,20 @@ namespace CutterBotCS.Modules.Simple
             sb.AppendLine(prefix + "Hello - Umaru says Hello!");
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Save Config and Json Helper
+        /// </summary>
+        public static void Save(string configdir, string configname)
+        {
+            DiscordBotConfig config = new DiscordBotConfig();
+
+            config.GetProperties();
+
+            JsonHelper.SerializeToFile(config, Path.Combine(configdir, configname));
+
+            DiscordBot.RiotHandler.PManager.Save();
         }
     }
 }

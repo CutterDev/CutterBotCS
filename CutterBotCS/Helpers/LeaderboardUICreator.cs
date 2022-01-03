@@ -1,11 +1,12 @@
 ﻿using Camille.RiotGames.LeagueV4;
-using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Drawing;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp.PixelFormats;
+using System;
+using SixLabors.ImageSharp.Drawing.Processing;
 
 namespace CutterBotCS.Helpers
 {
@@ -14,144 +15,197 @@ namespace CutterBotCS.Helpers
     /// </summary>
     public class LeaderboardUICreator
     {
-        Font TITLE_FONT = new Font("Helvetica", 42, FontStyle.Bold);
-        Font RANK_FONT = new Font("Helvetica", 22, FontStyle.Bold);
+        FontCollection m_FontCollection;
+        Rgba64 BACKGROUND = new Rgba64(65535, 32639, 20560, 65535);
 
-        const float POS_X_SIZE = 60;
-        const float NAME_X_SIZE = 300;
-        const float TIER_X_SIZE = 220;
-        const float LP_X_SIZE = 100;
-        const float W_X_SIZE = 80;
-        const float WL_X_SIZE = 25;
-        const float L_X_SIZE = 100;
-        const float T_X_SIZE = 100;
-        const float WR_X_SIZE = 150;
+        float POS_X_SIZE = 60;
+        float NAME_X_SIZE = 400;
+        float TIER_X_SIZE = 350;
+        float LP_X_SIZE = 150;
+        float W_X_SIZE = 125;
+        float WL_X_SIZE = 50;
+        float L_X_SIZE = 125;
+        float T_X_SIZE = 150;
+        float WR_X_SIZE = 150;
+
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        public LeaderboardUICreator()
+        {
+
+        }
+
+        /// <summary>
+        /// Initialize
+        /// </summary>
+        public void Initialize(string fontpath = "")
+        {
+            m_FontCollection = new FontCollection();
+            if (string.IsNullOrEmpty(fontpath))
+            {
+                try
+                {
+                    m_FontCollection.Install(AppDomain.CurrentDomain.BaseDirectory + "Resources/Fonts/boldfont.ttf");
+                    m_FontCollection.Install(AppDomain.CurrentDomain.BaseDirectory + "Resources/Fonts/bolditalicfont.ttf");
+                    m_FontCollection.Install(AppDomain.CurrentDomain.BaseDirectory + "Resources/Fonts/regularitalicfont.ttf");
+                    m_FontCollection.Install(AppDomain.CurrentDomain.BaseDirectory + "Resources/Fonts/regularfont.ttf");
+                }
+                catch(Exception e)
+                {
+
+                }
+
+            }
+        }
 
         /// <summary>
         /// Create Leaderboard Bitmap
         /// </summary>
-        public Bitmap CreateLeaderboard(List<LeagueEntry> leagueentries, string path)
+        public void CreateLeaderboard(List<LeagueEntry> leagueentries, string path)
         {           
-            Bitmap bm = new Bitmap(1300, 200 + (50 * leagueentries.Count));
-            bm.MakeTransparent(Color.Transparent);
+            Image image = new Image<Rgba64>(1750, 200 + (50 * leagueentries.Count), BACKGROUND);
 
+            FontFamily defaultfamilyfont;
+   
             if (leagueentries.Count > 0)
             {
-                Graphics g = Graphics.FromImage(bm);
-                g.FillRectangle(new SolidBrush(ColorTranslator.FromHtml("#ffff9255")), new Rectangle(0, 0, bm.Width, bm.Height));
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-                g.FillEllipse(Brushes.White, 10, 10, 140, 140);
-
-                // Draw Logo
-                g.DrawImage(Properties.Resources.logo, 20, 20, 120, 120);
-
-                // Draw Logo
-                g.DrawImage(Properties.Resources.benny, 1220, 30, 60, 60);
-
-                // Title 
-                string drawstring = "Pearlsayah Leaderboard";
-                SizeF stringsize = g.MeasureString(drawstring, TITLE_FONT);
-                g.DrawString(drawstring, TITLE_FONT, Brushes.White, new RectangleF(170, 55, stringsize.Width, stringsize.Height));
-
-                int i = 1;
-                foreach (LeagueEntry entry in leagueentries)
+                if (m_FontCollection.TryFind("Roboto", out defaultfamilyfont))
                 {
-                    drawstring = string.Format("{0})", i);
-                    stringsize = g.MeasureString(drawstring, RANK_FONT);
-                    float lineYPos = 130 + (i * stringsize.Height) + 5;
-                    float lineXPos = 50;
+                    try
+                    {
+                        Font titlefont = defaultfamilyfont.CreateFont(60, FontStyle.Bold);
+                        Font font = defaultfamilyfont.CreateFont(40, FontStyle.Bold);
 
-                    RectangleF rectf = new RectangleF(lineXPos, lineYPos, POS_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.White, rectf);
-                    drawstring = string.Format("{0}", entry.SummonerName);
+                        RendererOptions options = new RendererOptions(font, dpi: 72)
+                        {
+                            ApplyKerning = true,
+                        };
 
-                    lineXPos += POS_X_SIZE;
-                    // Name
-                    stringsize = g.MeasureString(drawstring, RANK_FONT);
-                    rectf = new RectangleF(lineXPos, lineYPos, NAME_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.White, rectf);
+                        Image logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/logo.png");
+                        logo.Mutate(x => x.Resize(new Size(120, 120)));
 
-                    lineXPos += NAME_X_SIZE;
+                        // Logo
+                        image.Mutate(x => x.DrawImage(logo, new Point(10, 10), 1));
+
+                        logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/benny.png");
+                        logo.Mutate(x => x.Resize(new Size(60, 60)));
+                        // Benny
+                        image.Mutate(x => x.DrawImage(logo, new Point(1650, 30), 1));
+
+                        // Title 
+                        string drawstring = "Pearlsayah Leaderboard";
+                        FontRectangle rect = TextMeasurer.Measure(drawstring, options);
+                        image.Mutate(x => x.DrawText(drawstring, titlefont, Color.White, new PointF(170, 55)));
+
+                        int i = 1;
+                        foreach(LeagueEntry entry in leagueentries)
+                        {
+                            drawstring = i.ToString();
+                            rect = TextMeasurer.Measure(drawstring, options);
+                            float lineYPos = 130 + (i * (rect.Height + 10)) + 0;
+                            float lineXPos = 50;
+
+                            FontRectangle fontrect = new FontRectangle(lineXPos, lineYPos, POS_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
+                            drawstring = string.Format("{0}", entry.SummonerName);
+
+                            lineXPos += POS_X_SIZE;
+                            // Name
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
+
+                            lineXPos += NAME_X_SIZE;
 
 
-                    // Tier Rank
-                    drawstring = string.Format("{0} {1}", entry.Tier, entry.Rank);
-                    rectf = new RectangleF(lineXPos, lineYPos, TIER_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.White, rectf);
-      
-                    lineXPos += TIER_X_SIZE;
+                            // Tier Rank
+                            drawstring = string.Format("{0} {1}", entry.Tier, entry.Rank);
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
+
+                            lineXPos += TIER_X_SIZE;
 
 
-                    // League Points
-                    drawstring = string.Format("LP {0}", entry.LeaguePoints);
-                    rectf = new RectangleF(lineXPos, lineYPos, LP_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.White, rectf);
+                            // League Points
+                            drawstring = string.Format("LP {0}", entry.LeaguePoints);
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
 
-                    lineXPos += LP_X_SIZE;
+                            lineXPos += LP_X_SIZE;
 
-                    // Wins / 
-                    drawstring = string.Format("{0}", entry.Wins);
-                    rectf = new RectangleF(lineXPos, lineYPos, W_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.DarkGreen, rectf);
+                            // Wins / 
+                            drawstring = string.Format("{0}", entry.Wins);
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
 
-                    lineXPos += W_X_SIZE;
+                            lineXPos += W_X_SIZE;
 
-                    // W
-                    drawstring = string.Format("W");
-                    rectf = new RectangleF(lineXPos, lineYPos, WL_X_SIZE + 15, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.DarkGreen, rectf);
+                            // W
+                            drawstring = string.Format("W");
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.DarkGreen, new PointF(fontrect.X, fontrect.Y)));
 
-                    lineXPos += WL_X_SIZE + 15;
+                            lineXPos += WL_X_SIZE + 10;
 
-                    // /
-                    drawstring = string.Format("/");
-                    rectf = new RectangleF(lineXPos, lineYPos, WL_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.White, rectf);
+                            // /
+                            drawstring = string.Format("/");
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
 
-                    lineXPos += WL_X_SIZE;
+                            lineXPos += WL_X_SIZE;
 
-                    // L
-                    drawstring = string.Format("L");
-                    rectf = new RectangleF(lineXPos, lineYPos, WL_X_SIZE + 10, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.DarkRed, rectf);
+                            // L
+                            drawstring = string.Format("L");
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.DarkRed, new PointF(fontrect.X, fontrect.Y)));
 
-                    lineXPos += WL_X_SIZE + 10;
+                            lineXPos += WL_X_SIZE + 25;
 
-                    // Losses
-                    drawstring = string.Format("{0}", entry.Losses);
-                    rectf = new RectangleF(lineXPos, lineYPos, L_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.DarkRed, rectf);
+                            // Losses
+                            drawstring = string.Format("{0}", entry.Losses);
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
 
-                    lineXPos += L_X_SIZE;
+                            lineXPos += L_X_SIZE;
 
-                    // Total 
-                    drawstring = string.Format("({0})", (entry.Losses + entry.Wins));
-                    rectf = new RectangleF(lineXPos, lineYPos, T_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, Brushes.White, rectf);
+                            // Total 
+                            drawstring = string.Format("({0})", (entry.Losses + entry.Wins));
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
 
-                    lineXPos += T_X_SIZE;
+                            lineXPos += T_X_SIZE;
 
-                    float wr = (entry.Wins / (float)(entry.Losses + entry.Wins)) * 100.0f;
+                            float wr = (entry.Wins / (float)(entry.Losses + entry.Wins)) * 100.0f;
 
-                    Brush wrbrush = wr >= 50.0 ? Brushes.DarkGreen : Brushes.DarkRed;
+                            Color wrcolor = wr >= 50.0 ? Color.DarkGreen : Color.DarkRed;
 
-                    // WinRate 
-                    drawstring = string.Format("{0:0.00}%", wr);
-                    rectf = new RectangleF(lineXPos, lineYPos, WR_X_SIZE, stringsize.Height);
-                    g.DrawString(drawstring, RANK_FONT, wrbrush, rectf);
+                            // WinRate 
+                            drawstring = string.Format("{0:0.00}%", wr);
+                            fontrect = TextMeasurer.Measure(drawstring, options);
+                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(drawstring, font, wrcolor, new PointF(fontrect.X, fontrect.Y)));
 
-                    i++;
+                            i++;
+                        }
+
+                        image.Save(path);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(String.Format("Error Creating Leaderboard: {0}", e.Message));
+                    }                                
                 }
-
-                g.Flush();
-
-                bm.Save(path);
             }
-
-            return bm;
+          
         }
     }
 }

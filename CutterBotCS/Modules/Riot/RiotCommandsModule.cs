@@ -15,6 +15,7 @@ namespace CutterBotCS.Modules.Riot
 {
     public class RiotCommandsModule : ModuleBase<SocketCommandContext>
     {
+        private LeaderboardUICreator m_Leaderboard;
         /// <summary>
         /// Draw Leaderboard as a PNG and display on Discord as a message
         /// </summary>
@@ -25,12 +26,17 @@ namespace CutterBotCS.Modules.Riot
         public async Task LeaderboardAsync()
         {
             StringBuilder message = new StringBuilder();
-            string image = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/CutterBot/leaderboard.png";
+            string image = AppDomain.CurrentDomain.BaseDirectory + "/Configuration/leaderboard.png";
             message.Append("LEADERBOARD NOT FOUND WTF DID YOU BREAK ETHAN?");
             List<LeagueEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync();
 
-            LeaderboardUICreator lc = new LeaderboardUICreator();
-            lc.CreateLeaderboard(boys, image);
+            if (m_Leaderboard == null)
+            {
+                m_Leaderboard = new LeaderboardUICreator();
+            }
+
+            m_Leaderboard.Initialize();
+            m_Leaderboard.CreateLeaderboard(boys, image);
 
             await Context.Channel.SendFileAsync(image, string.Empty);
         }
@@ -208,7 +214,6 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("registereuw")]
         [Summary("Register to leaderboard for Ranked Solo")]
-        [RequireRoleAttribute(DiscordBot.BOYZ)]
         public async Task RegisterPlayerEUW(string name)
         {
             string message = await RegisterPlayerAsync(name, PlatformRoute.EUW1, Context.User.Id);
@@ -221,7 +226,6 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("registerna")]
         [Summary("Register to leaderboard for Ranked Solo")]
-        [RequireRoleAttribute(DiscordBot.BOYZ)]
         public async Task RegisterPlayerNA(string name)
         {
             string message = await RegisterPlayerAsync(name, PlatformRoute.NA1, Context.User.Id);
@@ -233,7 +237,6 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("registereune")]
         [Summary("Register to leaderboard for Ranked Solo")]
-        [RequireRoleAttribute(DiscordBot.BOYZ)]
         public async Task RegisterPlayerEUNE(string name)
         {
             string message = await RegisterPlayerAsync(name, PlatformRoute.EUN1, Context.User.Id);
@@ -315,7 +318,7 @@ namespace CutterBotCS.Modules.Riot
                 {
                     Player player = new Player()
                     {
-                        DiscordId = Context.User.Id,
+                        DiscordId = user,
                         SummonerName = summoner.Name,
                         AccountId = summoner.AccountId,
                         Id = summoner.Id,
@@ -324,7 +327,7 @@ namespace CutterBotCS.Modules.Riot
                         Puuid = summoner.Puuid,
                         RevisionDate = summoner.RevisionDate
                     };
-                    DiscordBot.RiotHandler.PManager.Players.Add(player);
+                    DiscordBot.RiotHandler.PManager.AddPlayer(player);
                     await ReplyAsync(string.Format("Summoner {0} has been registered!", player.SummonerName));
                 }
                 else
@@ -343,10 +346,10 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Remove User who called the command's Summoner.")]
         public async Task RemovePlayer()
         {
-            List<Player> players = DiscordBot.RiotHandler.PManager.Players.Where(p => p.DiscordId == Context.User.Id).ToList();
+            List<Player> players = DiscordBot.RiotHandler.PManager.GetPlayers().Where(p => p.DiscordId == Context.User.Id).ToList();
             if (players.Count > 0)
             {
-                DiscordBot.RiotHandler.PManager.Players.Remove(players[0]);
+                DiscordBot.RiotHandler.PManager.RemovePlayer(players[0]);
                 await ReplyAsync(string.Format("Summoner {0} has been removed!", players[0].SummonerName));
             }
             else

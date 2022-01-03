@@ -151,7 +151,8 @@ namespace CutterBotCS.RiotAPI
         {
             List<LeagueEntry> boys = new List<LeagueEntry>();
 
-            foreach (Player player in PManager.Players)
+            var players = PManager.GetPlayers();
+            foreach (Player player in players)
             {
                 if(string.IsNullOrWhiteSpace(player.Id))
                 {

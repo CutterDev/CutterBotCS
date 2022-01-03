@@ -1,11 +1,7 @@
 ﻿using Camille.Enums;
 using CutterBotCS.Helpers;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CutterBotCS.Modules.Riot
 {
@@ -14,7 +10,7 @@ namespace CutterBotCS.Modules.Riot
         /// <summary>
         /// Players SummonerName, EncryptedSummonerId
         /// </summary>
-        public List<Player> Players { get; set; }
+        private List<Player> m_Players { get; set; }
 
         /// <summary>
         /// m_FilePath
@@ -40,16 +36,25 @@ namespace CutterBotCS.Modules.Riot
             {
                 if (JsonHelper.DeserializeFromFile(FilePath, out players))
                 {
-                    Players = players;
+                    m_Players = players;
                 }
             }
             else
             {
-                Players = new List<Player>();
+                m_Players = new List<Player>();
 
-                JsonHelper.SerializeToFile(Players, FilePath);
+                JsonHelper.SerializeToFile(m_Players, FilePath);
             }
 
+        }
+
+        /// <summary>
+        /// Get Players
+        /// </summary>
+        /// <returns></returns>
+        public List<Player> GetPlayers()
+        {
+            return m_Players;
         }
 
         /// <summary>
@@ -58,7 +63,7 @@ namespace CutterBotCS.Modules.Riot
         public bool PlayerExists(ulong discordid)
         {
             bool result = false;
-            foreach(Player player in Players)
+            foreach(Player player in m_Players)
             {
                 if (player.DiscordId == discordid)
                 {
@@ -78,7 +83,7 @@ namespace CutterBotCS.Modules.Riot
             bool result = false;
             player = null;
 
-            foreach(Player p in Players)
+            foreach(Player p in m_Players)
             {
                 if (p.DiscordId == discordid)
                 {
@@ -92,11 +97,29 @@ namespace CutterBotCS.Modules.Riot
         }
 
         /// <summary>
+        /// Add new Player
+        /// </summary>
+        public void AddPlayer(Player player)
+        {
+            m_Players.Add(player);
+            Save();
+        }
+
+        /// <summary>
+        /// Remove Player
+        /// </summary>
+        public void RemovePlayer(Player player)
+        {
+            m_Players.Remove(player);
+            Save();
+        }
+
+        /// <summary>
         /// Save
         /// </summary>
         public void Save()
         {
-            JsonHelper.SerializeToFile(Players, FilePath);
+            JsonHelper.SerializeToFile(m_Players, FilePath);
         }
     }
 

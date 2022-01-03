@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using CutterBotCS.Discord;
+using Discord.Commands;
 using System.Threading.Tasks;
 
 namespace CutterBotCS.Modules.Simple
@@ -23,5 +24,14 @@ namespace CutterBotCS.Modules.Simple
         [Command("Help")]
         [Summary("Show commands for Umaru")]
         public Task HelpAsync() => ReplyAsync(HelpCommands.GetHelpList());
+
+        // ~say Command List for Players
+        [Command("Save")]
+        [Summary("Save Discord Bot")]
+        public Task TaskSaveAsync()
+        {
+            HelpCommands.Save(DiscordBot.CONFIG_DIR, DiscordBot.CONFIG_NAME);
+            return ReplyAsync("Might of saved. Fuck knows.");
+        }
     }
 }
