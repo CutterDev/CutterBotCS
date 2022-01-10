@@ -156,7 +156,7 @@ namespace CutterBotCS.RiotAPI
             {
                 if(string.IsNullOrWhiteSpace(player.Id))
                 {
-                    Summoner summoner = await m_RiotInstance.SummonerV4().GetBySummonerNameAsync(player.Route, player.SummonerName);
+                    Summoner summoner = await m_RiotInstance.SummonerV4().GetBySummonerNameAsync(player.PlatformRoute, player.SummonerName);
 
                     if (summoner != null)
                     {
@@ -171,7 +171,7 @@ namespace CutterBotCS.RiotAPI
 
                 if (!string.IsNullOrWhiteSpace(player.Id))
                 {
-                    LeagueEntry[] entries = await m_RiotInstance.LeagueV4().GetLeagueEntriesForSummonerAsync(player.Route, player.Id);
+                    LeagueEntry[] entries = await m_RiotInstance.LeagueV4().GetLeagueEntriesForSummonerAsync(player.PlatformRoute, player.Id);
 
                     LeagueEntry soloranked = null;
                     if (entries != null && entries.Length > 0)

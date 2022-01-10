@@ -171,7 +171,12 @@ namespace CutterBotCS.Modules.Riot
         /// <summary>
         /// Platform Route
         /// </summary>
-        public PlatformRoute Route { get; set; }
+        public PlatformRoute PlatformRoute { get; set; }
+
+        /// <summary>
+        /// Regional Route
+        /// </summary>
+        public RegionalRoute RegionalRoute { get; set; }
 
         /// <summary>
         /// Player

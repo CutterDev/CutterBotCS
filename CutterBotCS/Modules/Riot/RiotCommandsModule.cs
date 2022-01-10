@@ -90,7 +90,7 @@ namespace CutterBotCS.Modules.Riot
             Player player;
             if (DiscordBot.RiotHandler.PManager.TryGetPlayer(Context.User.Id, out player))
             {
-                List<string> champions = await DiscordBot.RiotHandler.GetTop10MasteriesByIdAsync(player.Id, player.Route);
+                List<string> champions = await DiscordBot.RiotHandler.GetTop10MasteriesByIdAsync(player.Id, player.PlatformRoute);
                 message = ChampionMasteries(champions, player.SummonerName);
             }
             else
@@ -181,6 +181,25 @@ namespace CutterBotCS.Modules.Riot
             await ReplyAsync(message);
         }
 
+        [Command("History")]
+        [Summary("Get most recent 10 games for registered Player")]
+        public async Task RegisteredMatchHistoryAsync()
+        {
+            string message = string.Empty;
+
+            Player player;
+            if (DiscordBot.RiotHandler.PManager.TryGetPlayer(Context.User.Id, out player))
+            {
+                message = await MatchHistoryAsync(player.SummonerName, player.PlatformRoute, player.RegionalRoute);
+            }
+            else
+            {
+                message = "Player does not have a Summoner Registered";
+            }
+
+            await ReplyAsync(message);
+        }
+
         /// <summary>
         /// Match History Asynchronous
         /// </summary>
@@ -216,7 +235,7 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Register to leaderboard for Ranked Solo")]
         public async Task RegisterPlayerEUW(string name)
         {
-            string message = await RegisterPlayerAsync(name, PlatformRoute.EUW1, Context.User.Id);
+            string message = await RegisterPlayerAsync(name, RegionalRoute.EUROPE, PlatformRoute.EUW1, Context.User.Id);
 
             await ReplyAsync(message);
         }
@@ -228,7 +247,7 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Register to leaderboard for Ranked Solo")]
         public async Task RegisterPlayerNA(string name)
         {
-            string message = await RegisterPlayerAsync(name, PlatformRoute.NA1, Context.User.Id);
+            string message = await RegisterPlayerAsync(name, RegionalRoute.AMERICAS, PlatformRoute.NA1, Context.User.Id);
             await ReplyAsync(message);
         }
 
@@ -239,7 +258,7 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Register to leaderboard for Ranked Solo")]
         public async Task RegisterPlayerEUNE(string name)
         {
-            string message = await RegisterPlayerAsync(name, PlatformRoute.EUN1, Context.User.Id);
+            string message = await RegisterPlayerAsync(name, RegionalRoute.EUROPE, PlatformRoute.EUN1, Context.User.Id);
             await ReplyAsync(message);
         }
 
@@ -250,7 +269,7 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Register Player to Leaderboard with their id also")]
         public async Task PlayerAddEUW(string name, ulong id)
         {
-            string message = await AddPlayer(name, PlatformRoute.EUW1, id);
+            string message = await AddPlayer(name, RegionalRoute.EUROPE, PlatformRoute.EUW1, id);
 
             await ReplyAsync(message);
         }
@@ -262,7 +281,7 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Register Player to Leaderboard with their id also")]
         public async Task PlayerAddEUNE(string name, ulong id)
         {
-            string message = await AddPlayer(name, PlatformRoute.EUN1, id);
+            string message = await AddPlayer(name, RegionalRoute.EUROPE, PlatformRoute.EUN1, id);
             await ReplyAsync(message);
         }
 
@@ -273,20 +292,20 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Register Player to Leaderboard with their id also")]
         public async Task PlayerAddNA(string name, ulong id)
         {
-            string message = await AddPlayer(name, PlatformRoute.NA1, id);
+            string message = await AddPlayer(name, RegionalRoute.AMERICAS, PlatformRoute.NA1, id);
             await ReplyAsync(message);
         }
 
         /// <summary>
         /// Add Player to Registry
         /// </summary>
-        public async Task<string> AddPlayer(string name, PlatformRoute pr, ulong id)
+        public async Task<string> AddPlayer(string name, RegionalRoute rr, PlatformRoute pr, ulong id)
         {
             string message = "You are not Ethan. Feck off.";
 
             if (DiscordBot.IsEthan(Context.User.Id))
             {
-                message = await RegisterPlayerAsync(name, pr, id);
+                message = await RegisterPlayerAsync(name, rr, pr, id);
             }
 
             return message;
@@ -298,7 +317,7 @@ namespace CutterBotCS.Modules.Riot
         /// <param name="name"></param>
         /// <param name="pr"></param>
         /// <returns></returns>
-        public async Task<string> RegisterPlayerAsync(string name, PlatformRoute pr, ulong user)
+        public async Task<string> RegisterPlayerAsync(string name, RegionalRoute rr, PlatformRoute pr, ulong user)
         {
             string message = string.Empty;
 
@@ -323,7 +342,8 @@ namespace CutterBotCS.Modules.Riot
                         AccountId = summoner.AccountId,
                         Id = summoner.Id,
                         ProfileIconId = summoner.ProfileIconId,
-                        Route = pr,
+                        PlatformRoute = pr,
+                        RegionalRoute = rr,
                         Puuid = summoner.Puuid,
                         RevisionDate = summoner.RevisionDate
                     };

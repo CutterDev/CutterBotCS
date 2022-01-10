@@ -16,6 +16,7 @@ namespace CutterBotCS.Modules.Simple
         /// </summary>
         public static string GetHelpList()
         {
+            // TODO: CREATE THIS USING m_COMMANDS Command Service
             var prefix = Properties.Settings.Default.CommandPrefix;
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(prefix + "Leaderboard - Pearlsayah Leaderboard for Solo Ranked");
@@ -29,6 +30,7 @@ namespace CutterBotCS.Modules.Simple
             sb.AppendLine(prefix + "Mastery - Gets Top 10 Champions of a Summoner registed");
             sb.AppendLine(prefix + "remove - Remove Summoner tied to the user");
             sb.AppendLine(prefix + "Hello - Umaru says Hello!");
+            sb.AppendLine(prefix + "dn");
 
             return sb.ToString();
         }

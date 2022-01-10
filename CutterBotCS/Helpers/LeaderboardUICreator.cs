@@ -22,11 +22,10 @@ namespace CutterBotCS.Helpers
         float NAME_X_SIZE = 400;
         float TIER_X_SIZE = 350;
         float LP_X_SIZE = 150;
-        float W_X_SIZE = 125;
+        float W_X_SIZE = 100;
         float WL_X_SIZE = 50;
-        float L_X_SIZE = 125;
+        float L_X_SIZE = 100;
         float T_X_SIZE = 150;
-        float WR_X_SIZE = 150;
 
         /// <summary>
         /// Ctor
@@ -64,7 +63,7 @@ namespace CutterBotCS.Helpers
         /// </summary>
         public void CreateLeaderboard(List<LeagueEntry> leagueentries, string path)
         {           
-            Image image = new Image<Rgba64>(1750, 200 + (50 * leagueentries.Count), BACKGROUND);
+            Image image = new Image<Rgba64>(1750, 200 + (75 * leagueentries.Count), BACKGROUND);
 
             FontFamily defaultfamilyfont;
    
@@ -80,6 +79,22 @@ namespace CutterBotCS.Helpers
                         RendererOptions options = new RendererOptions(font, dpi: 72)
                         {
                             ApplyKerning = true,
+                        };
+
+                        DrawingOptions alignright = new DrawingOptions()
+                        {
+                            TextOptions = new TextOptions()
+                            {
+                                HorizontalAlignment = HorizontalAlignment.Right,                              
+                            }
+                        };
+
+                        DrawingOptions aligncenter = new DrawingOptions()
+                        {
+                            TextOptions = new TextOptions()
+                            {
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                            }
                         };
 
                         Image logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/logo.png");
@@ -99,12 +114,26 @@ namespace CutterBotCS.Helpers
                         image.Mutate(x => x.DrawText(drawstring, titlefont, Color.White, new PointF(170, 55)));
 
                         int i = 1;
+
+                        bool alternate = false;
+
                         foreach(LeagueEntry entry in leagueentries)
                         {
                             drawstring = i.ToString();
                             rect = TextMeasurer.Measure(drawstring, options);
-                            float lineYPos = 130 + (i * (rect.Height + 10)) + 0;
+                            float lineYPos = 130 + (i * (rect.Height + 10));
                             float lineXPos = 50;
+
+                            if (alternate)
+                            {
+                                image.Mutate(x => x.FillPolygon(Color.FromRgb(204, 112, 84),
+                                                                new PointF(20, lineYPos),
+                                                                new PointF(20, lineYPos + (rect.Height + 10)),
+                                                                new PointF(image.Width - 20, lineYPos + (rect.Height + 10)),
+                                                                new PointF(image.Width - 20, lineYPos)));       
+                            }
+
+                            alternate = !alternate;
 
                             FontRectangle fontrect = new FontRectangle(lineXPos, lineYPos, POS_X_SIZE, rect.Height);
                             image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
@@ -136,43 +165,28 @@ namespace CutterBotCS.Helpers
 
                             lineXPos += LP_X_SIZE;
 
-                            // Wins / 
+                            // Wins
                             drawstring = string.Format("{0}", entry.Wins);
                             fontrect = TextMeasurer.Measure(drawstring, options);
-                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
-                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
+                            fontrect = new FontRectangle(lineXPos + W_X_SIZE - 20, lineYPos, W_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(alignright, drawstring, font, Color.DarkGreen, new PointF(fontrect.X, fontrect.Y)));
 
                             lineXPos += W_X_SIZE;
 
-                            // W
-                            drawstring = string.Format("W");
-                            fontrect = TextMeasurer.Measure(drawstring, options);
-                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
-                            image.Mutate(x => x.DrawText(drawstring, font, Color.DarkGreen, new PointF(fontrect.X, fontrect.Y)));
-
-                            lineXPos += WL_X_SIZE + 10;
 
                             // /
                             drawstring = string.Format("/");
                             fontrect = TextMeasurer.Measure(drawstring, options);
-                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
-                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
+                            fontrect = new FontRectangle(lineXPos, lineYPos, WL_X_SIZE, rect.Height);
+                            image.Mutate(x => x.DrawText(aligncenter, drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
 
-                            lineXPos += WL_X_SIZE;
-
-                            // L
-                            drawstring = string.Format("L");
-                            fontrect = TextMeasurer.Measure(drawstring, options);
-                            fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
-                            image.Mutate(x => x.DrawText(drawstring, font, Color.DarkRed, new PointF(fontrect.X, fontrect.Y)));
-
-                            lineXPos += WL_X_SIZE + 25;
+                            lineXPos += 20;
 
                             // Losses
                             drawstring = string.Format("{0}", entry.Losses);
                             fontrect = TextMeasurer.Measure(drawstring, options);
                             fontrect = new FontRectangle(lineXPos, lineYPos, NAME_X_SIZE, rect.Height);
-                            image.Mutate(x => x.DrawText(drawstring, font, Color.White, new PointF(fontrect.X, fontrect.Y)));
+                            image.Mutate(x => x.DrawText(drawstring, font, Color.DarkRed, new PointF(fontrect.X, fontrect.Y)));
 
                             lineXPos += L_X_SIZE;
 

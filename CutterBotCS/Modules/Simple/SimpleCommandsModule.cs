@@ -20,6 +20,10 @@ namespace CutterBotCS.Modules.Simple
         [Summary("Hello from umaru")]
         public Task SayAsync() => ReplyAsync("https://tenor.com/view/hiya-anime-cute-smile-hello-gif-16987977");
 
+        [Command("dn")]
+        [Summary("Deez Nuts")]
+        public Task DNAsync() => ReplyAsync("https://tenor.com/view/testing-new-deez-nuts-ha-teeth-gif-15758045");
+
         // ~say Command List for Players
         [Command("Help")]
         [Summary("Show commands for Umaru")]
