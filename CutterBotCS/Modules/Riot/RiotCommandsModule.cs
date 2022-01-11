@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Camille.RiotGames.LeagueV4;
-using CutterBotCS.Helpers;
+using CutterBotCS.Leaderboard;
 using Camille.RiotGames.SummonerV4;
 using Camille.Enums;
 
@@ -16,6 +16,7 @@ namespace CutterBotCS.Modules.Riot
     public class RiotCommandsModule : ModuleBase<SocketCommandContext>
     {
         private LeaderboardUICreator m_Leaderboard;
+
         /// <summary>
         /// Draw Leaderboard as a PNG and display on Discord as a message
         /// </summary>
