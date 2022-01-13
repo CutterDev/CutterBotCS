@@ -83,16 +83,16 @@ namespace CutterBotCS.Leaderboard
                         };
 
                         // Logo
-                        Image logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/logo.png");
+                        Image logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/logo1.png");
                         // Resize Loaded Image
-                        logo.Mutate(x => x.Resize(new Size(120, 120)));
-                        //image.Mutate(x => x.DrawImage(logo, new Point(10, 10), 1));
+                        logo.Mutate(x => x.Resize(new Size(240, 240)));
+                        image.Mutate(x => x.DrawImage(logo, new Point(75, 75), 1));
 
                         // Benny
-                        logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/benny.png");
+                        logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/logo2.png");
                         // Resize Loaded Image
-                        logo.Mutate(x => x.Resize(new Size(60, 60)));
-                        //image.Mutate(x => x.DrawImage(logo, new Point(image.Width - logo.Width - 30, 30), 1));
+                        logo.Mutate(x => x.Resize(new Size(240, 240)));
+                        image.Mutate(x => x.DrawImage(logo, new Point(image.Width - logo.Width - 75, 75), 1));
 
                         // Title 
                         string drawstring = "Pearlsayah Leaderboard";
