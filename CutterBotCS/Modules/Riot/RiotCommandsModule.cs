@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Camille.RiotGames.LeagueV4;
 using CutterBotCS.Leaderboard;
 using Camille.RiotGames.SummonerV4;
 using Camille.Enums;
@@ -24,22 +23,81 @@ namespace CutterBotCS.Modules.Riot
         [Command("leaderboard")]
         [Summary("Pearlsayah Leaderboard for Solo Ranked")]
         [RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
-        public async Task LeaderboardAsync()
+        public async Task LeaderboardCommandAsync()
         {
-            StringBuilder message = new StringBuilder();
-            string image = AppDomain.CurrentDomain.BaseDirectory + "/Configuration/leaderboard.png";
-            message.Append("LEADERBOARD NOT FOUND WTF DID YOU BREAK ETHAN?");
-            List<LeagueEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync();
+            await ReplyAsync("Due to too much spam inbetween convos of said bot. Use #Leaderboard to see the stats.");
+        }
+
+        public async Task LeaderboardASync()
+        {
+            List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.None);
+
+            await SendLeaderboard(boys, false);
+        }
+
+
+        //[Command("leaderboard mostlosses")]
+        //[Summary("Leaderboard for SoloRanked filtered as most losses")]
+        //[RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
+        //public async Task LeaderboardMostLosses()
+        //{
+        //    List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.MostLosses);
+
+        //    await SendLeaderboard(boys, false);
+        //}
+
+        //[Command("leaderboard mostgames")]
+        //[Summary("Leaderboard for SoloRanked filtered as most Games")]
+        //[RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
+        //public async Task LeaderboardMostGames()
+        //{
+        //    List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.MostGames);
+
+        //    await SendLeaderboard(boys, false);
+        //}
+
+
+        //[Command("leaderboard bestwr")]
+        //[Summary("Leaderboard for SoloRanked filtered as most Games")]
+        //[RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
+        //public async Task LeaderboardBestWinRate()
+        //{
+        //    List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.HighestWinRate);
+
+        //    await SendLeaderboard(boys, false);
+        //}
+
+        //[Command("leaderboard worstwr")]
+        //[Summary("Leaderboard for SoloRanked filtered as most Games")]
+        //[RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
+        //public async Task LeaderboardWorstWinRate()
+        //{
+        //    List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.LowestWinRate);
+
+        //    await SendLeaderboard(boys, false);
+        //}
+
+        public async Task SendLeaderboard(List<LeaderboardEntry> entries, bool usepodium)
+        {
+            string image = AppDomain.CurrentDomain.BaseDirectory + "/Resources/Images/leaderboard.png";
 
             if (m_Leaderboard == null)
             {
                 m_Leaderboard = new LeaderboardUICreator();
             }
 
+            string errmessage;
             m_Leaderboard.Initialize();
-            m_Leaderboard.CreateLeaderboard(boys, image);
+            m_Leaderboard.CreateLeaderboard(entries, image, out errmessage, usepodium);
 
-            await Context.Channel.SendFileAsync(image, string.Empty);
+            if (string.IsNullOrWhiteSpace(errmessage))
+            {
+                await Context.Channel.SendFileAsync(image, string.Empty);
+            }
+            else
+            {
+                await Context.Channel.SendMessageAsync(errmessage);
+            }
         }
 
         #region Mastery Commands

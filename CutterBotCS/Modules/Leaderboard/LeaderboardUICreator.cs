@@ -7,6 +7,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using System;
 using SixLabors.ImageSharp.Drawing.Processing;
 using CutterBotCS.Modules.Leaderboard;
+using System.IO;
 
 namespace CutterBotCS.Leaderboard
 {
@@ -19,22 +20,26 @@ namespace CutterBotCS.Leaderboard
         FontCollection m_FontCollection;
         Rgba64 BACKGROUND = new Rgba64(39064, 49858, 60395, 65535);
 
+        int m_PodiumHeight = 500;
+
         float POS_X_SIZE = 60;
         float SUMMONER_BOX_WIDTH = 500;
-        float TIER_BOX_WIDTH = 400;
+        float TIER_BOX_WIDTH = 550;
         float LP_BOX_WIDTH = 200;
         float WINS_BOX_WIDTH = 125;
         float SLASH_BOX_WIDITH = 50;
         float LOSSES_BOX_WIDTH = 125;
-        float TOTALGAMES_BOX_WIDTH = 200;
+        float TOTALGAMES_BOX_WIDTH = 300;
         float WINRATE_BOX_WIDTH = 150;
+
+        RendererOptions m_Options;
 
         /// <summary>
         /// Ctor
         /// </summary>
         public LeaderboardUICreator()
         {
-            m_TextOptionsHelper = new TextOptionsHelper();
+            m_TextOptionsHelper = new TextOptionsHelper();  
         }
 
         /// <summary>
@@ -62,14 +67,25 @@ namespace CutterBotCS.Leaderboard
         /// <summary>
         /// Create Leaderboard Bitmap
         /// </summary>
-        public void CreateLeaderboard(List<LeagueEntry> leagueentries, string path)
-        {           
-            Image image = new Image<Rgba64>(1900, 350 + (75 * leagueentries.Count), BACKGROUND);
-
+        public void CreateLeaderboard(List<LeaderboardEntry> leagueentries, string path, out string message, bool usepodium = false)
+        {
+            message = string.Empty;
+           
             FontFamily defaultfamilyfont;
    
             if (leagueentries.Count > 0)
             {
+                if (usepodium)
+                {
+                    m_PodiumHeight = 500;
+                }
+                else
+                {
+                    m_PodiumHeight = 0;
+                }
+
+                Image image = new Image<Rgba64>(2300, 350 + m_PodiumHeight + (75 * leagueentries.Count), BACKGROUND);
+
                 if (m_FontCollection.TryFind("Roboto", out defaultfamilyfont))
                 {
                     try
@@ -77,7 +93,7 @@ namespace CutterBotCS.Leaderboard
                         Font titlefont = defaultfamilyfont.CreateFont(100, FontStyle.Bold);
                         Font font = defaultfamilyfont.CreateFont(60, FontStyle.Bold);
 
-                        RendererOptions options = new RendererOptions(font, dpi: 72)
+                        m_Options = new RendererOptions(font, dpi: 72)
                         {
                             ApplyKerning = true,
                         };
@@ -99,20 +115,42 @@ namespace CutterBotCS.Leaderboard
                         FontRectangle titlebox = new FontRectangle(0, 100, image.Width, 30);
                         DrawText(image, TextAlignment.Center, drawstring, titlefont, Color.White, titlebox);
 
-                        int i = 1;
-
+                        
                         bool alternate = false;
 
                         string sampletext = "CUTTERHEALER";
-                        float textheight = TextMeasurer.Measure(sampletext, options).Height;
+                        float textheight = TextMeasurer.Measure(sampletext, m_Options).Height;
                         float linexstartpos = 50;
+                        int i = 1;
 
-                        foreach (LeagueEntry entry in leagueentries)
+                        Font placefont;
+
+                        foreach (LeaderboardEntry entry in leagueentries)
                         {
+                            float lineYPos = 300 + m_PodiumHeight + (i * (textheight + 10));
 
-  
-                            float lineYPos = 300 + (i * (textheight + 10));
+                            if (usepodium)
+                            {
+                                switch (i)
+                                {
+                                    case 1:
+                                        placefont = defaultfamilyfont.CreateFont(60, FontStyle.Bold);
+                                        DrawPlace(image, string.Format("1 {0}", entry.SummonerName), entry.LogoPath,
+                                            placefont, Color.Gold, 120, (float)(image.Width / 2), 400.0f, SUMMONER_BOX_WIDTH);
+                                        break;
+                                    case 2:
+                                        placefont = defaultfamilyfont.CreateFont(60, FontStyle.Bold);
+                                        DrawPlace(image, string.Format("2 {0}", entry.SummonerName), entry.LogoPath,
+                                            placefont, Color.Silver, 120, (float)(image.Width / 4) + 100, 575.0f, SUMMONER_BOX_WIDTH);
+                                        break;
 
+                                    case 3:
+                                        placefont = defaultfamilyfont.CreateFont(60, FontStyle.Bold);
+                                        DrawPlace(image, string.Format("3 {0}", entry.SummonerName), entry.LogoPath,
+                                                  placefont, Color.SandyBrown, 120, (float)((image.Width / 4) * 3), 675.0f, SUMMONER_BOX_WIDTH);
+                                        break;
+                                }
+                            }
 
                             if (alternate)
                             {
@@ -120,7 +158,7 @@ namespace CutterBotCS.Leaderboard
                                                                 new PointF(20, lineYPos),
                                                                 new PointF(20, lineYPos + (textheight + 5)),
                                                                 new PointF(image.Width - 20, lineYPos + (textheight + 5)),
-                                                                new PointF(image.Width - 20, lineYPos)));       
+                                                                new PointF(image.Width - 20, lineYPos)));
                             }
 
                             alternate = !alternate;
@@ -137,7 +175,7 @@ namespace CutterBotCS.Leaderboard
 
 
                             // Tier Rank
-                            drawstring = string.Format("{0} {1}", entry.Tier, entry.Rank);
+                            drawstring = string.Format("{0} {1}", entry.Tier, entry.Division);
                             textbox = new FontRectangle(nextdrawpos.X, nextdrawpos.Y, TIER_BOX_WIDTH, textheight);
                             nextdrawpos = DrawText(image, TextAlignment.Left, drawstring, font, Color.White, textbox);
 
@@ -166,8 +204,7 @@ namespace CutterBotCS.Leaderboard
                             textbox = new FontRectangle(nextdrawpos.X, nextdrawpos.Y, TOTALGAMES_BOX_WIDTH, textheight);
                             nextdrawpos = DrawText(image, TextAlignment.Center, drawstring, font, Color.White, textbox);
 
-                            float wr = (entry.Wins / (float)(entry.Losses + entry.Wins)) * 100.0f;
-
+                            float wr = entry.WinRate;
                             // WinRate 
                             drawstring = string.Format("{0:0.00}%", wr);
                             Color wrcolor = wr >= 50.0 ? Color.DarkGreen : Color.DarkRed;
@@ -181,11 +218,37 @@ namespace CutterBotCS.Leaderboard
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(String.Format("Error Creating Leaderboard: {0}", e.Message));
+                        message = "OH NO WE DID A FUCKY WUCKY: " + String.Format("Error Creating Leaderboard: {0}", e.Message);
                     }                                
                 }
             }
           
+        }
+
+        public void DrawPlace(Image image, string drawstring, string logopath, Font font, Color color, int logosize, float posx, float posy, float width)
+        {
+            FontRectangle number1box;
+            PointF number1startpos;
+            PointF number1pos;
+
+            RendererOptions fontrenderoptions = new RendererOptions(font, dpi: 72)
+            {
+                ApplyKerning = true,
+            };
+
+            FontRectangle textmeasure = TextMeasurer.Measure(drawstring, fontrenderoptions);
+
+            number1box = new FontRectangle(posx - (SUMMONER_BOX_WIDTH / 2), posy, SUMMONER_BOX_WIDTH, textmeasure.Height);
+            number1pos = DrawText(image, TextAlignment.Center, drawstring, font, color, number1box, 20.0f);
+
+
+            if (File.Exists(logopath))
+            {
+                Image logo = Image.Load(logopath);
+                logo.Mutate(x => x.Resize(new Size(logosize, logosize)));
+                number1startpos = new PointF(number1pos.X, ((number1pos.Y + (textmeasure.Height / 2)) - (logo.Height / 2)));
+                image.Mutate(x => x.DrawImage(logo, new Point((int)(posx - (width / 2) - logo.Width - 10), (int)number1startpos.Y), 1));
+            }
         }
 
         /// <summary>

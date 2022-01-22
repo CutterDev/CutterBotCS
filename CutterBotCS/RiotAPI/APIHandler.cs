@@ -5,6 +5,7 @@ using Camille.Enums;
 using Camille.RiotGames;
 using Camille.RiotGames.LeagueV4;
 using Camille.RiotGames.SummonerV4;
+using CutterBotCS.Leaderboard;
 using CutterBotCS.Modules.Riot;
 
 namespace CutterBotCS.RiotAPI
@@ -147,13 +148,14 @@ namespace CutterBotCS.RiotAPI
         /// Boyz League
         /// </summary>
         /// <returns></returns>
-        public async Task<List<LeagueEntry>> GetBoyzLeagueAsync()
+        public async Task<List<LeaderboardEntry>> GetBoyzLeagueAsync(EntryFilter filter)
         {
-            List<LeagueEntry> boys = new List<LeagueEntry>();
+            List<LeaderboardEntry> boys = new List<LeaderboardEntry>();
 
             var players = PManager.GetPlayers();
             foreach (Player player in players)
             {
+                LeaderboardEntry lentry = null;
                 if(string.IsNullOrWhiteSpace(player.Id))
                 {
                     Summoner summoner = await m_RiotInstance.SummonerV4().GetBySummonerNameAsync(player.PlatformRoute, player.SummonerName);
@@ -171,11 +173,17 @@ namespace CutterBotCS.RiotAPI
 
                 if (!string.IsNullOrWhiteSpace(player.Id))
                 {
+                    lentry = new LeaderboardEntry()
+                    {
+                        DiscordId = player.DiscordId
+                    };
+
                     LeagueEntry[] entries = await m_RiotInstance.LeagueV4().GetLeagueEntriesForSummonerAsync(player.PlatformRoute, player.Id);
 
                     LeagueEntry soloranked = null;
+
                     if (entries != null && entries.Length > 0)
-                    {
+                    {   
                         foreach (LeagueEntry entry in entries)
                         {
                             if (entry.QueueType == QueueType.RANKED_SOLO_5x5)
@@ -185,13 +193,44 @@ namespace CutterBotCS.RiotAPI
                         }
                     }
 
-                    if (soloranked != null)
+                    if (lentry != null && soloranked != null)
                     {
-                        boys.Add(soloranked);
+                        lentry.LeagueId = soloranked.LeagueId;
+                        lentry.LeaguePoints = soloranked.LeaguePoints;
+                        lentry.Division = soloranked.Rank;
+                        lentry.Tier = soloranked.Tier;
+                        lentry.Losses = soloranked.Losses;
+                        lentry.Wins = soloranked.Wins;
+                        lentry.SummonerId = soloranked.SummonerId;
+                        lentry.SummonerName = soloranked.SummonerName;
+                        boys.Add(lentry);
                     }
                 }
 
-                boys = boys.OrderBy(b => b.Tier).ThenBy(b => b.Rank).ThenByDescending(b => b.LeaguePoints).ToList();
+                switch(filter)
+                {
+                    case EntryFilter.None:
+                        boys = boys.OrderBy(b => b.Tier).ThenBy(b => b.Division)
+                                    .ThenByDescending(b => b.LeaguePoints).ToList();
+                        break;
+
+                    case EntryFilter.MostWins:
+                        boys = boys.OrderByDescending(b => b.Wins).ToList();
+                        break;
+                    case EntryFilter.MostLosses:
+                        boys = boys.OrderByDescending(b => b.Losses).ToList();
+                        break;
+
+                    case EntryFilter.MostGames:
+                        boys = boys.OrderByDescending(b => b.TotalGames).ToList();
+                        break;
+                    case EntryFilter.HighestWinRate:
+                        boys = boys.OrderByDescending(b => b.WinRate).ToList();
+                        break;
+                    case EntryFilter.LowestWinRate:
+                        boys = boys.OrderBy(b => b.WinRate).ToList();
+                        break;
+                }
             }
 
             return boys;
