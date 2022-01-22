@@ -27,6 +27,19 @@ namespace CutterBotCS.Config
         public string RiotAPIToken { get; set; }
 
         /// <summary>
+        /// Discord Guild Id
+        /// </summary>
+        [DataMember]
+        public ulong DiscordGuildId { get; set; }
+
+        /// <summary>
+        /// Discord Leaderboard Channel Id
+        /// </summary>
+        [DataMember]
+        public ulong DiscordLeaderboardChannelId { get; set; }
+
+
+        /// <summary>
         /// Set Properties
         /// </summary>
         public void SetProperties()
@@ -34,6 +47,8 @@ namespace CutterBotCS.Config
             Properties.Settings.Default.RiotApiToken = RiotAPIToken;
             Properties.Settings.Default.CommandPrefix = Prefix;
             Properties.Settings.Default.DiscordToken = DiscordToken;
+            Properties.Settings.Default.DiscordGuildId = DiscordGuildId;
+            Properties.Settings.Default.DiscordLeaderboardChannelId = DiscordLeaderboardChannelId;
         }
 
         /// <summary>
@@ -44,6 +59,8 @@ namespace CutterBotCS.Config
             RiotAPIToken = Properties.Settings.Default.RiotApiToken;
             Prefix = Properties.Settings.Default.CommandPrefix;
             DiscordToken = Properties.Settings.Default.DiscordToken;
+            DiscordGuildId = Properties.Settings.Default.DiscordGuildId;
+            DiscordLeaderboardChannelId = Properties.Settings.Default.DiscordLeaderboardChannelId;
         }
     }
 }

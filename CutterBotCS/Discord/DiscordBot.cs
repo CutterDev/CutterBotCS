@@ -1,11 +1,14 @@
 ﻿using CutterBotCS.Config;
 using CutterBotCS.Helpers;
+using CutterBotCS.Leaderboard;
 using CutterBotCS.Modules;
 using CutterBotCS.RiotAPI;
 using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using Discord.WebSocket;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -19,15 +22,19 @@ namespace CutterBotCS.Discord
     /// </summary>
     public class DiscordBot
     {
+        System.Timers.Timer LeaderboardTimer = new System.Timers.Timer();
+
         public const long ETHAN = 217599819202560000;
         public const string BOYZ = "Boyz";
         public static APIHandler RiotHandler;
-        private CommandHandler m_CommandHandler;
+        public static CommandService BotCommandService;
+        CommandHandler m_BotCommandHandler;
         private DiscordSocketClient m_Client;
-        private CommandService m_Commands;
         private string m_Token;
         private string m_ConfigDir;
         private string m_ConfigName;
+        private ulong m_CurrentLeaderboardMessage;
+        private LeaderboardUICreator m_Leaderboard;
 
         static string LEADERBOARD_PATH = AppDomain.CurrentDomain.BaseDirectory + "/Configuration/players.json";
         public static string CONFIG_DIR = AppDomain.CurrentDomain.BaseDirectory + "/Configuration";
@@ -52,7 +59,7 @@ namespace CutterBotCS.Discord
         {
             m_Token = Properties.Settings.Default.DiscordToken;
             RiotHandler = new APIHandler(LEADERBOARD_PATH);
-            m_Commands = new CommandService();
+            BotCommandService = new CommandService();
 
             //
             // Init Riot Handler
@@ -77,8 +84,33 @@ namespace CutterBotCS.Discord
             // 
             // Init CommandHandler
             //
-            m_CommandHandler = new CommandHandler(m_Client, m_Commands);
-            await m_CommandHandler.InstallCommandsAsync();
+            m_BotCommandHandler = new CommandHandler(m_Client, BotCommandService);
+            await m_BotCommandHandler.InstallCommandsAsync();
+
+            LeaderboardTimer.Elapsed += LeaderboardTimer_Elapsed;
+
+            // 15 minutes
+            LeaderboardTimer.Interval = 60000 * 10;
+            LeaderboardTimer.Enabled = true;
+
+            LeaderboardTimer_Elapsed(null, null);
+        }
+
+        private async void LeaderboardTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.None);
+
+            // change this shite.
+            SocketGuild sg = m_Client.GetGuild(Properties.Settings.Default.DiscordGuildId);
+
+            if (sg != null)
+            {
+                SocketTextChannel stc = sg.GetTextChannel(Properties.Settings.Default.DiscordLeaderboardChannelId);
+                if (stc != null)
+                {
+                    await SendLeaderboard(boys, stc, false);
+                }
+            }
         }
 
         /// <summary>
@@ -111,6 +143,37 @@ namespace CutterBotCS.Discord
         public static bool IsEthan(ulong id)
         {
             return id == ETHAN;
+        }
+
+        public async Task SendLeaderboard(List<LeaderboardEntry> entries, SocketTextChannel channel, bool usepodium)
+        {
+            string image = AppDomain.CurrentDomain.BaseDirectory + "/Resources/Images/leaderboard.png";
+
+            if (m_CurrentLeaderboardMessage > 0)
+            {
+                await channel.DeleteMessageAsync(m_CurrentLeaderboardMessage);
+            }
+
+            if (m_Leaderboard == null)
+            {
+                m_Leaderboard = new LeaderboardUICreator();
+            }
+
+            string errmessage;
+            m_Leaderboard.Initialize();
+            m_Leaderboard.CreateLeaderboard(entries, image, out errmessage, usepodium);
+            RestUserMessage rest;
+            if (string.IsNullOrWhiteSpace(errmessage))
+            {
+                rest = await channel.SendFileAsync(image, string.Empty);
+            }
+            else
+            {
+                rest = await channel.SendMessageAsync(errmessage);
+
+            }
+
+            m_CurrentLeaderboardMessage = rest.Id;
         }
     }
 }

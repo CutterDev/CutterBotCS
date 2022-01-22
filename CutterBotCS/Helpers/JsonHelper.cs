@@ -86,18 +86,14 @@ namespace CutterBotCS.Helpers
             try
             {
                 jsontxt = File.ReadAllText(path);
-                TryDeserialize(jsontxt, out obj);
-                result = true;
+
+                // Check text existed in file and we can deserialize
+                result = !string.IsNullOrWhiteSpace(jsontxt) &&
+                             TryDeserialize<T>(jsontxt, out obj);
             }
             catch(Exception e)
             {
 
-            }
-
-            if (!string.IsNullOrWhiteSpace(jsontxt) &&
-                TryDeserialize<T>(jsontxt, out obj))
-            {
-                result = true;
             }
 
             return result;
