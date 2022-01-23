@@ -37,7 +37,7 @@ namespace CutterBotCS.Modules.Simple
         {
             if (DiscordBot.IsEthan(Context.User.Id))
             {
-                HelpCommands.Save(DiscordBot.CONFIG_DIR, DiscordBot.CONFIG_NAME);
+                HelpCommands.Save(DiscordBot.CONFIG_DIR, DiscordBot.CONFIG_FILENAME);
                 return ReplyAsync("Might of saved. Fuck knows.");
             }
             else

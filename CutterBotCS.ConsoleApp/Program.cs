@@ -1,7 +1,6 @@
 ﻿using CutterBotCS.Config;
 using CutterBotCS.Discord;
 using CutterBotCS.Helpers;
-using System;
 using System.IO;
 
 namespace CutterBotCS.ConsoleApp
@@ -17,7 +16,7 @@ namespace CutterBotCS.ConsoleApp
         /// </summary>
         public async void Start()
         {
-            m_DiscordBot = new DiscordBot(DiscordBot.CONFIG_DIR, DiscordBot.CONFIG_NAME);
+            m_DiscordBot = new DiscordBot();
             InitializeSettings();
 
             await m_DiscordBot.Initialize();
@@ -34,7 +33,7 @@ namespace CutterBotCS.ConsoleApp
         public void InitializeSettings()
         {
             var configdir = DiscordBot.CONFIG_DIR;
-            var configname = DiscordBot.CONFIG_NAME;
+            var configname = DiscordBot.CONFIG_FILENAME;
             string configpath = Path.Combine(configdir, configname);
 
             // Config Dir

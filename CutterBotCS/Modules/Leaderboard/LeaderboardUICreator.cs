@@ -1,15 +1,13 @@
-﻿using Camille.RiotGames.LeagueV4;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 using SixLabors.ImageSharp.Drawing.Processing;
-using CutterBotCS.Modules.Leaderboard;
 using System.IO;
 
-namespace CutterBotCS.Leaderboard
+namespace CutterBotCS.Modules.Leaderboard
 {
     /// <summary>
     /// Leaderboard UI Creator

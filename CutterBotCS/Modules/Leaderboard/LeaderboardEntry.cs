@@ -1,7 +1,7 @@
 ﻿using Camille.Enums;
 using System;
 
-namespace CutterBotCS.Leaderboard
+namespace CutterBotCS.Modules.Leaderboard
 {
     /// <summary>
     /// Leaderboard Entry

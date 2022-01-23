@@ -5,57 +5,24 @@ using Camille.Enums;
 using Camille.RiotGames;
 using Camille.RiotGames.LeagueV4;
 using Camille.RiotGames.SummonerV4;
-using CutterBotCS.Leaderboard;
+using CutterBotCS.Modules.Leaderboard;
 using CutterBotCS.Modules.Riot;
 
 namespace CutterBotCS.RiotAPI
 {
-    public class APIHandler
+    /// <summary>
+    /// Riot API Handler
+    /// </summary>
+    public class RiotAPIHandler
     {
-        string m_PlayersPath;
         RiotGamesApi m_RiotInstance;
         public PlayerManager PManager;
-
-        // ENCRYPTED SUMMONER IDS ARE ENCRYPTED TO THE API KEY.
-        // WHEN REQUESTING SUMMONER IDS USE THE SAME KEY FOR REQUEST WITH THOSE IDS
-        private List<string> m_Boyz_Ids = new List<string>()
-        {
-            // CutterHealer
-            "TQ5lPY8EqMbXK0XZiRiwuPTakusJJZGcBNQfh4YGULuIt9U",
-            // Viperino
-            "aJ_dZCp7tf_YPT2UXPk77W-dl6mIoq1Vtpk5ztDMnBwQDdo",
-            // Beyn
-            "Olby6WI9UHFkUgi5egfpt-pLWb1ntSKYbFAyehoU5NiHqNE",
-            // Logyra
-            "l6klspuZY9a3RXqoSlQqbzRndeWCQbkPvn-2PYjXBmuuVA0",
-            // Raging
-            "KHP-no_MKNViwnxFesnYl59rqxub7AN0CJ7gYJeR1ms_eCvn",
-            // Sherveen
-            "c9h0UDjonKZRWYKIpVnSjR_mMesE9P0ZySf-1vx-TYQnPWQ",
-            // Tommy 
-            "Ntd7VqWbXTeO9hNtSBErjESDOoppyE_cV7sugmEpIUX1BkJk",
-            // Pearl
-            "x8osa-diL3np9WwnQjS-xIcAHRh537dayU09Itf3fhrrrRcm",
-            // Fletch
-            "zJKDFPrC9ejrOCHbqhJvJo080JtcKnyJ1sy4yK4pcPRD9V77",
-            // Bluka
-            "kignUG9EDBBg-CvUUQwWoRm5C-jMAx8RvaP_sjW-S6Is2dc",
-            // Shahrooz
-            "KArgj_cLuhu7UduodL2n8Q7LO-FbPU8dtI3Q4ex-m_On3EI",
-            // The Liin 
-            "wHNIK1k621gbGTZuLELbIeq-M-lmjSNtCpO8pcbtanClStdm",
-            // GhostLust
-            "uAzAsqLPneRFjLMM1QyOoL4s79JvXVEmy9AiM3C5vyT9kpCYK1daD4OgnQ",
-            // Nix0712
-            "9W6Ks02Ja9bMcnli3bQ0vQTp7r0piPpMgRT_wyLdr8osRKJ1g8yyMNmEew"
-        };
 
         /// <summary>
         /// API Handler
         /// </summary>
-        public APIHandler(string playerspath)
+        public RiotAPIHandler(string playerspath)
         {
-            m_PlayersPath = playerspath;
             PManager = new PlayerManager(playerspath);
         }
 
@@ -72,8 +39,6 @@ namespace CutterBotCS.RiotAPI
         /// <summary>
         /// Get Summoner 
         /// </summary>
-        /// <param name="summonername"></param>
-        /// <returns></returns>
         public async Task<Summoner> GetSummonerAsync(PlatformRoute pr, string summonername)
         {
             return await m_RiotInstance.SummonerV4().GetBySummonerNameAsync(pr, summonername);
@@ -82,8 +47,6 @@ namespace CutterBotCS.RiotAPI
         /// <summary>
         /// Get Summoner 
         /// </summary>
-        /// <param name="summonername"></param>
-        /// <returns></returns>
         public async Task<Summoner> GetSummonerByAccountIdAsync(PlatformRoute pr, string accountid)
         {
             return await m_RiotInstance.SummonerV4().GetByAccountIdAsync(pr, accountid);
@@ -116,8 +79,6 @@ namespace CutterBotCS.RiotAPI
         /// <summary>
         /// Get Top 10 Summoner Masteries
         /// </summary>
-        /// <param name="summonername"></param>
-        /// <returns></returns>
         public async Task<List<string>> GetTopSummonerMasteriesAsync(string summonername, PlatformRoute pr)
         {
             List<string> champions = new List<string>();
@@ -147,7 +108,6 @@ namespace CutterBotCS.RiotAPI
         /// <summary>
         /// Boyz League
         /// </summary>
-        /// <returns></returns>
         public async Task<List<LeaderboardEntry>> GetBoyzLeagueAsync(EntryFilter filter)
         {
             List<LeaderboardEntry> boys = new List<LeaderboardEntry>();
