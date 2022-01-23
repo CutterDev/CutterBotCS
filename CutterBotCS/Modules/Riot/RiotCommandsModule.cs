@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CutterBotCS.Leaderboard;
 using Camille.RiotGames.SummonerV4;
 using Camille.Enums;
 
@@ -14,90 +13,20 @@ namespace CutterBotCS.Modules.Riot
 {
     public class RiotCommandsModule : ModuleBase<SocketCommandContext>
     {
-        private LeaderboardUICreator m_Leaderboard;
 
         /// <summary>
-        /// Draw Leaderboard as a PNG and display on Discord as a message
+        /// Leaderboard no longer is draw from command. Leaderboard.cs handles it
         /// </summary>
         /// <returns></returns>
         [Command("leaderboard")]
-        [Summary("Pearlsayah Leaderboard for Solo Ranked")]
+        [Summary("Due to too much spam inbetween convos of said bot. Use #Leaderboard to see the stats.")]
         [RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
         public async Task LeaderboardCommandAsync()
         {
-            await ReplyAsync("Due to too much spam inbetween convos of said bot. Use #Leaderboard to see the stats.");
-        }
+            string channel = Properties.Settings.Default.DiscordLeaderboardChannelId > 0 ? string.Format("<#{0}>", Properties.Settings.Default.DiscordLeaderboardChannelId)
+                                                                                         : "Unknown";
 
-        public async Task LeaderboardASync()
-        {
-            List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.None);
-
-            await SendLeaderboard(boys, false);
-        }
-
-
-        //[Command("leaderboard mostlosses")]
-        //[Summary("Leaderboard for SoloRanked filtered as most losses")]
-        //[RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
-        //public async Task LeaderboardMostLosses()
-        //{
-        //    List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.MostLosses);
-
-        //    await SendLeaderboard(boys, false);
-        //}
-
-        //[Command("leaderboard mostgames")]
-        //[Summary("Leaderboard for SoloRanked filtered as most Games")]
-        //[RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
-        //public async Task LeaderboardMostGames()
-        //{
-        //    List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.MostGames);
-
-        //    await SendLeaderboard(boys, false);
-        //}
-
-
-        //[Command("leaderboard bestwr")]
-        //[Summary("Leaderboard for SoloRanked filtered as most Games")]
-        //[RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
-        //public async Task LeaderboardBestWinRate()
-        //{
-        //    List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.HighestWinRate);
-
-        //    await SendLeaderboard(boys, false);
-        //}
-
-        //[Command("leaderboard worstwr")]
-        //[Summary("Leaderboard for SoloRanked filtered as most Games")]
-        //[RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
-        //public async Task LeaderboardWorstWinRate()
-        //{
-        //    List<LeaderboardEntry> boys = await DiscordBot.RiotHandler.GetBoyzLeagueAsync(EntryFilter.LowestWinRate);
-
-        //    await SendLeaderboard(boys, false);
-        //}
-
-        public async Task SendLeaderboard(List<LeaderboardEntry> entries, bool usepodium)
-        {
-            string image = AppDomain.CurrentDomain.BaseDirectory + "/Resources/Images/leaderboard.png";
-
-            if (m_Leaderboard == null)
-            {
-                m_Leaderboard = new LeaderboardUICreator();
-            }
-
-            string errmessage;
-            m_Leaderboard.Initialize();
-            m_Leaderboard.CreateLeaderboard(entries, image, out errmessage, usepodium);
-
-            if (string.IsNullOrWhiteSpace(errmessage))
-            {
-                await Context.Channel.SendFileAsync(image, string.Empty);
-            }
-            else
-            {
-                await Context.Channel.SendMessageAsync(errmessage);
-            }
+            await ReplyAsync(string.Format("Due to too much spam inbetween convos of said bot. Use {0} to see the stats.", channel));
         }
 
         #region Mastery Commands
