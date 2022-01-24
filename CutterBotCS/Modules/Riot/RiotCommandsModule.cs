@@ -347,25 +347,63 @@ namespace CutterBotCS.Modules.Riot
             return message;
         }
 
+        #endregion
+
+        #region Remove Commands
+
         /// <summary>
         /// Remove Player
         /// </summary>
         [Command("remove")]
         [Summary("Remove User who called the command's Summoner.")]
-        public async Task RemovePlayer()
+        public async Task CommandRemovePlayer()
         {
-            List<Player> players = DiscordBot.RiotHandler.PManager.GetPlayers().Where(p => p.DiscordId == Context.User.Id).ToList();
-            if (players.Count > 0)
+            string message = RemovePlayer(Context.User.Id);
+
+            await ReplyAsync(message);
+        }
+
+        /// <summary>
+        /// Remove Player
+        /// </summary>
+        [Command("remove")]
+        [Summary("Remove User who called the command's Summoner.")]
+        public async Task CommandRemovePlayer(ulong id)
+        {
+            List<Player> players = DiscordBot.RiotHandler.PManager.GetPlayers().Where(p => p.DiscordId == id).ToList();
+
+            string message = String.Empty;
+
+            if(DiscordBot.IsEthan(Context.User.Id))
             {
-                DiscordBot.RiotHandler.PManager.RemovePlayer(players[0]);
-                await ReplyAsync(string.Format("Summoner {0} has been removed!", players[0].SummonerName));
+                message = RemovePlayer(id);
             }
             else
             {
-                await ReplyAsync("You do not have a Summoner Registered");
-
-
+                message = "You are not Ethan. Feck off.";
             }
+
+            await ReplyAsync(message);
+        }
+
+        /// <summary>
+        /// Remove Player
+        /// </summary>
+        public string RemovePlayer(ulong id)
+        {
+            string result = string.Empty;
+            List<Player> players = DiscordBot.RiotHandler.PManager.GetPlayers().Where(p => p.DiscordId == id).ToList();
+            if (players.Count > 0)
+            {
+                DiscordBot.RiotHandler.PManager.RemovePlayer(players[0]);
+                result = string.Format("Summoner {0} has been removed!", players[0].SummonerName);
+            }
+            else
+            {
+                result = "You do not have a Summoner Registered";
+            }
+
+            return result;
         }
 
         #endregion
