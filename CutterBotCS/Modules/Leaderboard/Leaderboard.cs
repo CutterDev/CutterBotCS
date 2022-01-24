@@ -18,11 +18,12 @@ namespace CutterBotCS.Modules.Leaderboard
 
         private LeaderboardUICreator m_Creator;
         private ulong m_CurrentLeaderboardMessage;
+        private bool m_TimerOnClockInterval = false;
 
         /// <summary>
         /// Milliseconds (10 Minutes)
         /// </summary>
-        private const double TIMER_INTERVAL = 60000 * 10;
+        private const double TIMER_INTERVAL = 60000 * 15;
 
         /// <summary>
         /// Timer to Draw Leaderboard
@@ -45,8 +46,8 @@ namespace CutterBotCS.Modules.Leaderboard
         {
             DrawTimer.Elapsed += DrawTimer_Elapsed;
 
-            // 15 minutes
-            DrawTimer.Interval = TIMER_INTERVAL;
+            DrawTimer.Interval = 500;
+            DrawTimer.Enabled = true;
         }
 
         /// <summary>
@@ -56,11 +57,12 @@ namespace CutterBotCS.Modules.Leaderboard
         {
             DateTime timenow = DateTime.UtcNow;
 
-            int minutes = timenow.Minute;
-
             // Check its the 15th minute interval of the day
-            if (minutes % 15 == 0)
+            if (m_TimerOnClockInterval || (timenow.Minute % 15 == 0 && timenow.Second == 0))
             {
+                m_TimerOnClockInterval = true;
+                DrawTimer.Interval = TIMER_INTERVAL;
+
                 SocketGuild sg = m_DiscordClient.GetGuild(Properties.Settings.Default.DiscordGuildId);
 
                 if (sg != null)

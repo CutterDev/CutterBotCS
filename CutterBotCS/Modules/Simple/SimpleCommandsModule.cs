@@ -12,13 +12,13 @@ namespace CutterBotCS.Modules.Simple
         // ~say hello world -> hello world
         [Command("say")]
         [Summary("Echoes a message.")]
-        public Task SayAsync(string echo)
+        public Task SayAsync([Remainder]string echo)
             => ReplyAsync(echo);
 
         // ~say https://tenor.com/view/hiya-anime-cute-smile-hello-gif-16987977
         [Command("Hello")]
         [Summary("Hello from umaru")]
-        public Task SayAsync() => ReplyAsync("https://tenor.com/view/hiya-anime-cute-smile-hello-gif-16987977");
+        public Task HelloAsync() => ReplyAsync("https://tenor.com/view/hiya-anime-cute-smile-hello-gif-16987977");
 
         [Command("dn")]
         [Summary("???")] // Deez Nuts

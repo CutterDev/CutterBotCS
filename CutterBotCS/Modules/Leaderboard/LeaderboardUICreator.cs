@@ -21,7 +21,7 @@ namespace CutterBotCS.Modules.Leaderboard
         int m_PodiumHeight = 500;
 
         float POS_X_SIZE = 60;
-        float SUMMONER_BOX_WIDTH = 500;
+        float SUMMONER_BOX_WIDTH = 600;
         float TIER_BOX_WIDTH = 550;
         float LP_BOX_WIDTH = 200;
         float WINS_BOX_WIDTH = 125;

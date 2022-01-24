@@ -36,7 +36,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("RiotEUW Mastery")]
         [Summary("Gets top 10 Champion Masteries of a player")]
-        public async Task UnregisteredEUWMasteries(string summonername)
+        public async Task UnregisteredEUWMasteries([Remainder]string summonername)
         {
             string message = await UnregisteredMastery(summonername, PlatformRoute.EUW1);
 
@@ -48,7 +48,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("RiotEUNE Mastery")]
         [Summary("Gets top 10 Champion Masteries of a player")]
-        public async Task UnregisteredEUNEMasteries(string summonername)
+        public async Task UnregisteredEUNEMasteries([Remainder]string summonername)
         {
             string message = await UnregisteredMastery(summonername, PlatformRoute.EUN1);
 
@@ -60,7 +60,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("RiotNA Mastery")]
         [Summary("Gets top 10 Champion Masteries of a player")]
-        public async Task UnregisteredNAMasteries(string summonername)
+        public async Task UnregisteredNAMasteries([Remainder]string summonername)
         {
             string message = await UnregisteredMastery(summonername, PlatformRoute.NA1);
 
@@ -138,7 +138,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("RiotEUW History")]
         [Summary("Get most recent 10 games of a player")]
-        public async Task MatchHistoryEUWAsync(string summonername)
+        public async Task MatchHistoryEUWAsync([Remainder]string summonername)
         {
             string message = await MatchHistoryAsync(summonername, PlatformRoute.EUW1, RegionalRoute.EUROPE);
 
@@ -150,7 +150,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("RiotEUNE History")]
         [Summary("Get most recent 10 games of a player")]
-        public async Task MatchHistoryEUNEAsync(string summonername)
+        public async Task MatchHistoryEUNEAsync([Remainder]string summonername)
         {
             string message = await MatchHistoryAsync(summonername, PlatformRoute.EUN1, RegionalRoute.EUROPE);
 
@@ -162,7 +162,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("RiotNA History")]
         [Summary("Get most recent 10 games of a player")]
-        public async Task MatchHistoryNAsync(string summonername)
+        public async Task MatchHistoryNAsync([Remainder]string summonername)
         {
             string message = await MatchHistoryAsync(summonername, PlatformRoute.NA1, RegionalRoute.EUROPE);
 
@@ -221,7 +221,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("registereuw")]
         [Summary("Register to leaderboard for Ranked Solo")]
-        public async Task RegisterPlayerEUW(string name)
+        public async Task RegisterPlayerEUW([Remainder]string name)
         {
             string message = await RegisterPlayerAsync(name, RegionalRoute.EUROPE, PlatformRoute.EUW1, Context.User.Id);
 
@@ -233,7 +233,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("registerna")]
         [Summary("Register to leaderboard for Ranked Solo")]
-        public async Task RegisterPlayerNA(string name)
+        public async Task RegisterPlayerNA([Remainder]string name)
         {
             string message = await RegisterPlayerAsync(name, RegionalRoute.AMERICAS, PlatformRoute.NA1, Context.User.Id);
             await ReplyAsync(message);
@@ -244,7 +244,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("registereune")]
         [Summary("Register to leaderboard for Ranked Solo")]
-        public async Task RegisterPlayerEUNE(string name)
+        public async Task RegisterPlayerEUNE([Remainder]string name)
         {
             string message = await RegisterPlayerAsync(name, RegionalRoute.EUROPE, PlatformRoute.EUN1, Context.User.Id);
             await ReplyAsync(message);
@@ -255,7 +255,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("playeraddeuw")]
         [Summary("Register Player to Leaderboard with their id also")]
-        public async Task PlayerAddEUW(string name, ulong id)
+        public async Task PlayerAddEUW(ulong id, [Remainder]string name)
         {
             string message = await AddPlayer(name, RegionalRoute.EUROPE, PlatformRoute.EUW1, id);
 
@@ -267,7 +267,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("playeraddeune")]
         [Summary("Register Player to Leaderboard with their id also")]
-        public async Task PlayerAddEUNE(string name, ulong id)
+        public async Task PlayerAddEUNE(ulong id, [Remainder]string name)
         {
             string message = await AddPlayer(name, RegionalRoute.EUROPE, PlatformRoute.EUN1, id);
             await ReplyAsync(message);
@@ -278,7 +278,7 @@ namespace CutterBotCS.Modules.Riot
         /// </summary>
         [Command("playeraddna")]
         [Summary("Register Player to Leaderboard with their id also")]
-        public async Task PlayerAddNA(string name, ulong id)
+        public async Task PlayerAddNA(ulong id, [Remainder]string name)
         {
             string message = await AddPlayer(name, RegionalRoute.AMERICAS, PlatformRoute.NA1, id);
             await ReplyAsync(message);
