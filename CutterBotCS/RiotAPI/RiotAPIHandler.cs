@@ -15,7 +15,7 @@ namespace CutterBotCS.RiotAPI
     /// </summary>
     public class RiotAPIHandler
     {
-        RiotGamesApi m_RiotInstance;
+        RiotGamesApi m_APIInstance;
         public PlayerManager PManager;
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace CutterBotCS.RiotAPI
         public void Initialize()
         {
             string riottoken = Properties.Settings.Default.RiotApiToken;
-            m_RiotInstance = RiotGamesApi.NewInstance(riottoken);
+            m_APIInstance = RiotGamesApi.NewInstance(riottoken);
             PManager.Initialize();
         }
 
@@ -41,7 +41,7 @@ namespace CutterBotCS.RiotAPI
         /// </summary>
         public async Task<Summoner> GetSummonerAsync(PlatformRoute pr, string summonername)
         {
-            return await m_RiotInstance.SummonerV4().GetBySummonerNameAsync(pr, summonername);
+            return await m_APIInstance.SummonerV4().GetBySummonerNameAsync(pr, summonername);
         }
 
         /// <summary>
@@ -49,9 +49,8 @@ namespace CutterBotCS.RiotAPI
         /// </summary>
         public async Task<Summoner> GetSummonerByAccountIdAsync(PlatformRoute pr, string accountid)
         {
-            return await m_RiotInstance.SummonerV4().GetByAccountIdAsync(pr, accountid);
+            return await m_APIInstance.SummonerV4().GetByAccountIdAsync(pr, accountid);
         }
-
 
         /// <summary>
         /// Get Top 10 Masteries using Summoner Id
@@ -59,7 +58,7 @@ namespace CutterBotCS.RiotAPI
         public async Task<List<string>> GetTop10MasteriesByIdAsync(string id, PlatformRoute pr)
         {
             List<string> champions = new List<string>();
-            var masteries = await m_RiotInstance.ChampionMasteryV4().GetAllChampionMasteriesAsync(pr, id);
+            var masteries = await m_APIInstance.ChampionMasteryV4().GetAllChampionMasteriesAsync(pr, id);
 
             if (masteries != null)
             {
@@ -88,7 +87,7 @@ namespace CutterBotCS.RiotAPI
 
             if (summoner != null)
             {
-                var masteries = await m_RiotInstance.ChampionMasteryV4().GetAllChampionMasteriesAsync(pr, summoner.Id);
+                var masteries = await m_APIInstance.ChampionMasteryV4().GetAllChampionMasteriesAsync(pr, summoner.Id);
 
                 if (masteries != null)
                 {
@@ -118,7 +117,7 @@ namespace CutterBotCS.RiotAPI
                 LeaderboardEntry lentry = null;
                 if(string.IsNullOrWhiteSpace(player.Id))
                 {
-                    Summoner summoner = await m_RiotInstance.SummonerV4().GetBySummonerNameAsync(player.PlatformRoute, player.SummonerName);
+                    Summoner summoner = await m_APIInstance.SummonerV4().GetBySummonerNameAsync(player.PlatformRoute, player.SummonerName);
 
                     if (summoner != null)
                     {
@@ -138,7 +137,7 @@ namespace CutterBotCS.RiotAPI
                         DiscordId = player.DiscordId
                     };
 
-                    LeagueEntry[] entries = await m_RiotInstance.LeagueV4().GetLeagueEntriesForSummonerAsync(player.PlatformRoute, player.Id);
+                    LeagueEntry[] entries = await m_APIInstance.LeagueV4().GetLeagueEntriesForSummonerAsync(player.PlatformRoute, player.Id);
 
                     LeagueEntry soloranked = null;
 
@@ -201,7 +200,7 @@ namespace CutterBotCS.RiotAPI
         /// </summary>
         public async Task<List<string>> GetRankedHistoryByIdAsync(string id, PlatformRoute pr, RegionalRoute rr)
         {
-            var summonerData = await m_RiotInstance.SummonerV4().GetBySummonerIdAsync(pr, id);
+            var summonerData = await m_APIInstance.SummonerV4().GetBySummonerIdAsync(pr, id);
 
             return await GetRankedHistoryAsync(rr, summonerData);
         }
@@ -212,7 +211,7 @@ namespace CutterBotCS.RiotAPI
         public async Task<List<string>> GetRankedHistoryByNameAsync(string summonername, PlatformRoute pr, RegionalRoute rr)
         {
             // Get summoners data (blocking).
-            var summonerData = await m_RiotInstance.SummonerV4().GetBySummonerNameAsync(pr, summonername);
+            var summonerData = await m_APIInstance.SummonerV4().GetBySummonerNameAsync(pr, summonername);
 
             return await GetRankedHistoryAsync(rr, summonerData);
         }
@@ -226,12 +225,12 @@ namespace CutterBotCS.RiotAPI
             if (summonerdata != null)
             {
                 // Get 10 most recent matches (blocking)
-                var matchlist = await m_RiotInstance.MatchV5().GetMatchIdsByPUUIDAsync(
+                var matchlist = await m_APIInstance.MatchV5().GetMatchIdsByPUUIDAsync(
                    rr, summonerdata.Puuid, start: 0, count: 10, type: "ranked");
 
                 // Get match results (done asynchronously -> not blocking -> fast).
                 var matchDataTasks = matchlist.Select(
-                       matchMetadata => m_RiotInstance.MatchV5().GetMatchAsync(RegionalRoute.EUROPE, matchMetadata)
+                       matchMetadata => m_APIInstance.MatchV5().GetMatchAsync(RegionalRoute.EUROPE, matchMetadata)
                    ).ToArray();
 
                 // Wait for all task requests to complete asynchronously.
