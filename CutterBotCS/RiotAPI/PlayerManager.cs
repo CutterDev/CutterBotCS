@@ -3,7 +3,7 @@ using CutterBotCS.Helpers;
 using System.Collections.Generic;
 using System.IO;
 
-namespace CutterBotCS.Modules.Riot
+namespace CutterBotCS.RiotAPI
 {
     public class PlayerManager
     {
