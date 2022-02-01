@@ -1,12 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Camille.Enums;
 using Camille.RiotGames;
 using Camille.RiotGames.LeagueV4;
+using Camille.RiotGames.MatchV5;
 using Camille.RiotGames.SummonerV4;
+using CutterBotCS.Helpers;
 using CutterBotCS.Modules.Leaderboard;
 using CutterBotCS.Modules.Riot;
+using CutterBotCS.SQL;
 
 namespace CutterBotCS.RiotAPI
 {
@@ -17,6 +21,7 @@ namespace CutterBotCS.RiotAPI
     {
         RiotGamesApi m_APIInstance;
         public PlayerManager PManager;
+        SQLClient m_SQLClient;
 
         /// <summary>
         /// API Handler
@@ -24,6 +29,8 @@ namespace CutterBotCS.RiotAPI
         public RiotAPIHandler(string playerspath)
         {
             PManager = new PlayerManager(playerspath);
+
+            m_SQLClient = new SQLClient();
         }
 
         /// <summary>
@@ -228,22 +235,29 @@ namespace CutterBotCS.RiotAPI
                 var matchlist = await m_APIInstance.MatchV5().GetMatchIdsByPUUIDAsync(
                    rr, summonerdata.Puuid, start: 0, count: 10, type: "ranked");
 
-                // Get match results (done asynchronously -> not blocking -> fast).
-                var matchDataTasks = matchlist.Select(
-                       matchMetadata => m_APIInstance.MatchV5().GetMatchAsync(RegionalRoute.EUROPE, matchMetadata)
-                   ).ToArray();
+                m_SQLClient.Open();
 
-                // Wait for all task requests to complete asynchronously.
-                var matchDatas = await Task.WhenAll(matchDataTasks);
-
-                for (var i = 0; i < matchDatas.Count(); i++)
+                List<Match> matches;
+                try
                 {
-                    var matchData = matchDatas[i];
+                    matches = await GetMatches(matchlist, rr);
+
+                }
+                catch(Exception e)
+                {
+                    matches = new List<Match>();
+                }
+
+      
+
+                int count = 1;
+                foreach (Match match in matches)
+                {
                     // Get this summoner's participant ID info.
-                    var participantIdData = matchData.Info.Participants
+                    var participantIdData = match.Info.Participants
                         .First(pi => summonerdata.Id.Equals(pi.SummonerId));
                     // Find the corresponding participant.
-                    var participant = matchData.Info.Participants
+                    var participant = match.Info.Participants
                         .First(p => p.ParticipantId == participantIdData.ParticipantId);
 
                     var win = participant.Win;
@@ -254,7 +268,7 @@ namespace CutterBotCS.RiotAPI
 
                     string gamemode;
 
-                    switch (matchData.Info.QueueId)
+                    switch (match.Info.QueueId)
                     {
                         case Queue.SUMMONERS_RIFT_5V5_RANKED_SOLO:
                             gamemode = "SOLO";
@@ -270,10 +284,12 @@ namespace CutterBotCS.RiotAPI
                     var kda = deaths == 0 ? kills + assists : (kills + assists) / (float)deaths;
 
                     // GAMEMODE - WIN/LOSS - CHAMPION - KILLS/DEATHS/ASSISTS KDA
-                    string matchhistorymsg = string.Format("{0} - {1,3}) {2,-4} ({3})", gamemode, i + 1, win ? "Win" : "Loss", champ) +
+                    string matchhistorymsg = string.Format("{0} - {1,3}) {2,-4} ({3})", gamemode, count, win ? "Win" : "Loss", champ) +
                                           string.Format("     K/D/A {0}/{1}/{2} ({3:0.00})", kills, deaths, assists, kda);
 
                     matchhistory.Add(matchhistorymsg);
+
+                    count++;
                 }
             }
             else
@@ -281,7 +297,179 @@ namespace CutterBotCS.RiotAPI
                 matchhistory.Add("Cannot find Summoner. Please try again.");
             }
 
+
+            m_SQLClient.Close();
+
             return matchhistory;
+        }
+
+        /// <summary>
+        /// Get Matches
+        /// </summary>
+        private async Task<List<Match>> GetMatches(string[] matchlist, RegionalRoute rr)
+        {
+
+            string region = string.Empty;
+
+            switch (rr)
+            {
+                case RegionalRoute.ASIA:
+                    region = "ASIA";
+                    break;
+                case RegionalRoute.AMERICAS:
+                    region = "NA";
+                    break;
+                case RegionalRoute.EUROPE:
+                    region = "EUW";
+                    break;
+                case RegionalRoute.SEA:
+                    region = "OCE";
+                    break;
+                default:
+                    region = "EUW";
+                    break;
+            }
+
+            List<Match> matches = new List<Match>();
+            foreach (string matchid in matchlist)
+            {
+                Match match;
+                if (!m_SQLClient.SelectFromMatchHistory(region, matchid, out match))
+                {
+                    match = await m_APIInstance.MatchV5().GetMatchAsync(RegionalRoute.EUROPE, matchid);
+
+                    string team1json = string.Empty;
+                    string team2json = string.Empty;
+                    JsonHelper.TrySerialize(match.Info.Teams[0], out team1json);
+                    JsonHelper.TrySerialize(match.Info.Teams[1], out team2json);
+
+                    string message;
+                    m_SQLClient.InsertToMatchHistory(region, match.Metadata.MatchId, match.Metadata.DataVersion, match.Info.GameCreation, match.Info.GameDuration, match.Info.GameEndTimestamp,
+                                                    match.Info.GameId, match.Info.GameMode.ToString(), match.Info.GameName, match.Info.GameStartTimestamp, match.Info.GameType.ToString(),
+                                                    match.Info.GameVersion, match.Info.MapId.ToString(), match.Info.PlatformId, match.Info.QueueId.ToString(), match.Info.Participants[0].ParticipantId, match.Info.Participants[1].ParticipantId,
+                                                    match.Info.Participants[2].ParticipantId, match.Info.Participants[3].ParticipantId, match.Info.Participants[4].ParticipantId, match.Info.Participants[5].ParticipantId, match.Info.Participants[6].ParticipantId,
+                                                    match.Info.Participants[7].ParticipantId, match.Info.Participants[8].ParticipantId, match.Info.Participants[9].ParticipantId, team1json, team2json, out message);                   
+                    for (int i = 0; i < 10; i++)
+                    {
+                        Participant p = match.Info.Participants[i];
+                        m_SQLClient.InsertToMatchParticipants(region, match.Metadata.MatchId, p.ParticipantId,
+                            p.BaronKills,
+                            p.BountyLevel,
+                            p.ChampExperience,
+                            (int)p.ChampionId,
+                            p.ChampionName,
+                            p.ChampionTransform,
+                            p.ChampLevel,
+                            p.ConsumablesPurchased,
+                            p.DamageDealtToBuildings,
+                            p.DamageDealtToObjectives,
+                            p.DamageDealtToTurrets,
+                            p.DamageSelfMitigated,
+                            p.Deaths,
+                            p.DetectorWardsPlaced,
+                            p.DoubleKills,
+                            p.DragonKills,
+                            p.FirstBloodAssist,
+                            p.FirstBloodKill,
+                            p.FirstTowerAssist,
+                            p.FirstTowerKill,
+                            p.GameEndedInEarlySurrender,
+                            p.GameEndedInSurrender,
+                            p.GoldEarned,
+                            p.GoldSpent,
+                            p.IndividualPosition,
+                            p.InhibitorKills,
+                            p.InhibitorsLost,
+                            p.InhibitorTakedowns,
+                            p.Item0,
+                            p.Item1,
+                            p.Item2,
+                            p.Item3,
+                            p.Item4,
+                            p.Item5,
+                            p.Item6,
+                            p.ItemsPurchased,
+                            p.KillingSprees,
+                            p.Kills,
+                            p.Lane,
+                            p.LargestCriticalStrike,
+                            p.LargestKillingSpree,
+                            p.LargestMultiKill,
+                            p.LongestTimeSpentLiving,
+                            p.MagicDamageDealt,
+                            p.MagicDamageDealtToChampions,
+                            p.MagicDamageTaken,
+                            p.NeutralMinionsKilled,
+                            p.NexusKills,
+                            p.NexusLost,
+                            p.NexusTakedowns,
+                            p.ObjectivesStolen,
+                            p.ObjectivesStolenAssists,
+                            p.PentaKills,
+                            p.PhysicalDamageDealt,
+                            p.PhysicalDamageDealtToChampions,
+                            p.PhysicalDamageTaken,
+                            p.ProfileIcon,
+                            p.Puuid,
+                            p.QuadraKills,
+                            p.RiotIdTagline,
+                            p.Role,
+                            p.SightWardsBoughtInGame,
+                            p.Spell1Casts,
+                            p.Spell2Casts,
+                            p.Spell3Casts,
+                            p.Spell4Casts,
+                            p.Summoner1Casts,
+                            p.Summoner1Id,
+                            p.Summoner2Casts,
+                            p.Summoner2Id,
+                            p.SummonerId,
+                            p.SummonerLevel,
+                            p.SummonerName,
+                            p.TeamEarlySurrendered,
+                            p.TeamId.ToString(),
+                            p.TeamPosition,
+                            p.TimeCCingOthers,
+                            p.TimePlayed,
+                            p.TotalDamageDealt,
+                            p.TotalDamageDealtToChampions,
+                            p.TotalDamageShieldedOnTeammates,
+                            p.TotalDamageTaken,
+                            p.TotalHeal,
+                            p.TotalHealsOnTeammates,
+                            p.TotalMinionsKilled,
+                            p.TotalTimeCCDealt,
+                            p.TotalTimeSpentDead,
+                            p.TotalUnitsHealed,
+                            p.TripleKills,
+                            p.TrueDamageDealt,
+                            p.TrueDamageDealtToChampions,
+                            p.TrueDamageTaken,
+                            p.TurretKills,
+                            p.TurretsLost,
+                            p.TurretTakedowns,
+                            p.UnrealKills,
+                            p.VisionScore,
+                            p.VisionWardsBoughtInGame,
+                            p.WardsKilled,
+                            p.WardsPlaced,
+                            p.Win,
+                            out message);
+
+                        string perks1json;
+                        string perks2json;
+
+                        JsonHelper.TrySerialize(p.Perks.Styles[0], out perks1json);
+                        JsonHelper.TrySerialize(p.Perks.Styles[1], out perks2json);
+
+                        m_SQLClient.InsertParticipantsStats(region, matchid, p.ParticipantId, p.Perks.StatPerks.Defense, p.Perks.StatPerks.Flex,
+                                                            p.Perks.StatPerks.Offense, perks1json, perks2json, out message);
+                    }
+                }
+
+                matches.Add(match);
+            }
+            return matches;
         }
     }
 }

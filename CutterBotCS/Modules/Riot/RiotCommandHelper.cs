@@ -2,6 +2,7 @@
 using Camille.RiotGames.SummonerV4;
 using CutterBotCS.Discord;
 using CutterBotCS.RiotAPI;
+using Discord;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,21 +19,53 @@ namespace CutterBotCS.Modules.Riot
         /// <summary>
         /// Get registered player's 10 most recent ranked games
         /// </summary>
-        public static async Task<string> GetRegisteredPlayerHistoryAsync(ulong discordid)
+        public static async Task<EmbedBuilder> GetRegisteredPlayerHistoryAsync(ulong discordid)
         {
-            string message = string.Empty;
+            var embed = new EmbedBuilder();
 
             Player player;
             if (DiscordBot.RiotHandler.PManager.TryGetPlayer(discordid, out player))
             {
-                message = await GetMatchHistoryAsync(player.SummonerName, player.PlatformRoute, player.RegionalRoute);
+                embed.Title = player.SummonerName;
+                embed.Description = "Top 10 most recent ranked games";
+                List<string> matches = await GetMatchHistoryEmbedAsync(player.SummonerName, player.PlatformRoute, player.RegionalRoute);
+
+                int count = 1;
+                foreach(string match in matches)
+                {
+                    embed.AddField("Match " + count, match);
+
+                    count++;
+                }
             }
             else
             {
-                message = "Player does not have a Summoner Registered";
+                embed.Description = "Player does not have a Summoner Registered";
             }
 
-            return message;
+            return embed;
+        }
+
+        /// <summary>
+        /// Get 10 most recent ranked games for a Summoner
+        /// </summary>
+        public static async Task<List<string>> GetMatchHistoryEmbedAsync(string name, PlatformRoute pr, RegionalRoute rr)
+        {
+            List<string> matches = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                List<string> history = await DiscordBot.RiotHandler.GetRankedHistoryByNameAsync(name, pr, rr);
+                if (history.Count > 0)
+                {
+                    foreach (string match in history)
+                    {
+                        matches.Add(match);
+                    }
+
+                }
+            }
+            return matches;
         }
 
         /// <summary>

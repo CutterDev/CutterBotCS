@@ -51,6 +51,7 @@
   <ItemGroup>
     <PackageReference Include="Camille.RiotGames" Version="3.0.0-nightly-2021-11-20-c5fc4cac7c" />
     <PackageReference Include="Discord.Net" Version="3.1.0" />
+    <PackageReference Include="MySql.Data" Version="8.0.28" />
     <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta15" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta13" />
@@ -71,5 +72,9 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Modules\Riot\History\" />
   </ItemGroup>
 </Project>

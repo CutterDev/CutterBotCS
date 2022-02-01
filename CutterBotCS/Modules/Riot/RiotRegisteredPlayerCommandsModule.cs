@@ -44,9 +44,9 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Get most recent 10 games for registered Player")]
         public async Task RegisteredMatchHistoryAsync()
         {
-            string message = await RiotCommandHelper.GetRegisteredPlayerHistoryAsync(Context.User.Id);
+            EmbedBuilder message = await RiotCommandHelper.GetRegisteredPlayerHistoryAsync(Context.User.Id);
 
-            await ReplyAsync(message);
+            await ReplyAsync(embed: message.Build());
         }
     }
 }
