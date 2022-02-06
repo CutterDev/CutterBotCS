@@ -77,4 +77,8 @@
   <ItemGroup>
     <Folder Include="Modules\Riot\History\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CutterDragon\CutterDragon.csproj" />
+  </ItemGroup>
 </Project>
