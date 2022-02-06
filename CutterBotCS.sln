@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CutterBotCS", "CutterBotCS\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CutterBotCS.ConsoleApp", "CutterBotCS.ConsoleApp\CutterBotCS.ConsoleApp.csproj", "{6CAEDF70-B814-475A-979A-93EA08E7ADA0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CutterBotCS.JobService", "CutterBotCS.CutterDragonService\CutterBotCS.JobService.csproj", "{F237756F-6F3E-439B-8075-08B5CA337150}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CutterDragon", "CutterDragon\CutterDragon.csproj", "{41B106E1-6483-4E44-B99B-60EBFA8BB874}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{6CAEDF70-B814-475A-979A-93EA08E7ADA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CAEDF70-B814-475A-979A-93EA08E7ADA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6CAEDF70-B814-475A-979A-93EA08E7ADA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F237756F-6F3E-439B-8075-08B5CA337150}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F237756F-6F3E-439B-8075-08B5CA337150}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F237756F-6F3E-439B-8075-08B5CA337150}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F237756F-6F3E-439B-8075-08B5CA337150}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41B106E1-6483-4E44-B99B-60EBFA8BB874}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41B106E1-6483-4E44-B99B-60EBFA8BB874}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41B106E1-6483-4E44-B99B-60EBFA8BB874}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41B106E1-6483-4E44-B99B-60EBFA8BB874}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
