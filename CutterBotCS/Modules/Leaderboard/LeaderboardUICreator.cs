@@ -6,6 +6,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using System;
 using SixLabors.ImageSharp.Drawing.Processing;
 using System.IO;
+using CutterBotCS.Worker;
 
 namespace CutterBotCS.Modules.Leaderboard
 {
@@ -32,6 +33,9 @@ namespace CutterBotCS.Modules.Leaderboard
 
         RendererOptions m_Options;
 
+        const string IMAGES_DIR = @"/home/pi/CutterBot/Resources/Images/";
+        const string FONTS_DIR = @"/home/pi/CutterBot/Resources/Fonts/";
+
         /// <summary>
         /// Ctor
         /// </summary>
@@ -43,23 +47,20 @@ namespace CutterBotCS.Modules.Leaderboard
         /// <summary>
         /// Initialize
         /// </summary>
-        public void Initialize(string fontpath = "")
+        public void Initialize()
         {
             m_FontCollection = new FontCollection();
-            if (string.IsNullOrEmpty(fontpath))
+            try
             {
-                try
-                {
-                    m_FontCollection.Install(AppDomain.CurrentDomain.BaseDirectory + "Resources/Fonts/boldfont.ttf");
-                    m_FontCollection.Install(AppDomain.CurrentDomain.BaseDirectory + "Resources/Fonts/bolditalicfont.ttf");
-                    m_FontCollection.Install(AppDomain.CurrentDomain.BaseDirectory + "Resources/Fonts/regularitalicfont.ttf");
-                    m_FontCollection.Install(AppDomain.CurrentDomain.BaseDirectory + "Resources/Fonts/regularfont.ttf");
-                }
-                catch(Exception e)
-                {
-
-                }
+                m_FontCollection.Install(FONTS_DIR + "boldfont.ttf");
+                m_FontCollection.Install(FONTS_DIR + "bolditalicfont.ttf");
+                m_FontCollection.Install(FONTS_DIR + "regularitalicfont.ttf");
+                m_FontCollection.Install(FONTS_DIR + "regularfont.ttf");
             }
+            catch(Exception e)
+            {
+                DiscordWorker.Log(String.Format("Error Installing Fonts: {0}", e.Message), LogType.Error);
+            }            
         }
 
         /// <summary>
@@ -97,16 +98,25 @@ namespace CutterBotCS.Modules.Leaderboard
                         };
 
                         // Logo
-                        Image logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/logo1.png");
-                        // Resize Loaded Image
-                        logo.Mutate(x => x.Resize(new Size(240, 240)));
-                        image.Mutate(x => x.DrawImage(logo, new Point(75, 75), 1));
+                        string logopath = IMAGES_DIR + "Logo1.png";
+                        if (File.Exists(logopath))
+                        {
+                            Image logo = Image.Load(logopath);
+                            // Resize Loaded Image
+                            logo.Mutate(x => x.Resize(new Size(240, 240)));
+                            image.Mutate(x => x.DrawImage(logo, new Point(75, 75), 1));
+                        }
 
-                        // Benny
-                        logo = Image.Load(AppDomain.CurrentDomain.BaseDirectory + "Resources/Images/logo2.png");
-                        // Resize Loaded Image
-                        logo.Mutate(x => x.Resize(new Size(240, 240)));
-                        image.Mutate(x => x.DrawImage(logo, new Point(image.Width - logo.Width - 75, 75), 1));
+                        // Logo 2
+                        string logo2path = @IMAGES_DIR + "Logo2.png";
+                        if (File.Exists(logo2path))
+                        {
+                            // Benny
+                            Image logo = Image.Load(logo2path);
+                            // Resize Loaded Image
+                            logo.Mutate(x => x.Resize(new Size(240, 240)));
+                            image.Mutate(x => x.DrawImage(logo, new Point(image.Width - logo.Width - 75, 75), 1));
+                        }        
 
                         // Title 
                         string drawstring = "Pearlsayah Leaderboard";
@@ -216,13 +226,21 @@ namespace CutterBotCS.Modules.Leaderboard
                     }
                     catch (Exception e)
                     {
-                        message = "OH NO WE DID A FUCKY WUCKY: " + String.Format("Error Creating Leaderboard: {0}", e.Message);
+                        message = e.Message;
+                        DiscordWorker.Log(String.Format("Error Creating Leaderboard: {0}", e.Message), LogType.Error);
                     }                                
+                }
+                else
+                {
+                    message = "Fonts were not installed";
                 }
             }
           
         }
 
+        /// <summary>
+        /// Draw Place
+        /// </summary>
         public void DrawPlace(Image image, string drawstring, string logopath, Font font, Color color, int logosize, float posx, float posy, float width)
         {
             FontRectangle number1box;

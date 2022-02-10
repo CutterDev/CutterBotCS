@@ -1,62 +1,22 @@
-﻿using CutterBotCS.Config;
-using CutterBotCS.Discord;
-using CutterBotCS.Helpers;
-using System.IO;
+﻿using CutterBotCS.Worker;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace CutterBotCS.ConsoleApp
 {
     public class Program
     {
-        public static DiscordBot m_DiscordBot;
-
-        static void Main(string[] args) => new Program().Start();
-
-        /// <summary>
-        /// Start
-        /// </summary>
-        public async void Start()
+        static void Main(string[] args)
         {
-            m_DiscordBot = new DiscordBot();
-            InitializeSettings();
-
-            await m_DiscordBot.Initialize();
-            string userinput = string.Empty;
-            while (true)
-            {
-                
-            }
+            CreateHostBuilder(args).Build().Run();
         }
 
-        /// <summary>
-        /// Initialize Settings
-        /// </summary>
-        public void InitializeSettings()
-        {
-            var configdir = DiscordBot.CONFIG_DIR;
-            var configname = DiscordBot.CONFIG_FILENAME;
-            string configpath = Path.Combine(configdir, configname);
-
-            // Config Dir
-            if (!Directory.Exists(configdir))
-            {
-                Directory.CreateDirectory(configdir);
-            }
-
-            DiscordBotConfig config;
-            if (File.Exists(configpath))
-            {
-                if (JsonHelper.DeserializeFromFile(configpath, out config))
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .UseSystemd()
+                .ConfigureServices((hostContext, services) =>
                 {
-                    config.SetProperties();
-                }
-            }
-            else
-            {
-                config = new DiscordBotConfig();
-                config.GetProperties();
-
-                JsonHelper.SerializeToFile(config, configpath);
-            }
-        }
+                    services.AddHostedService<DiscordWorker>();
+                });
     }
 }

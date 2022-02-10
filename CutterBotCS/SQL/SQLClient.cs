@@ -4,6 +4,8 @@ using CutterBotCS.Helpers;
 using System;
 using System.Data;
 using MySql.Data.MySqlClient;
+using CutterBotCS.Worker;
+using System.Diagnostics;
 
 namespace CutterBotCS.SQL
 {
@@ -14,12 +16,12 @@ namespace CutterBotCS.SQL
         /// </summary>
         MySqlConnection m_Connection { get; set; }
 
-        const string INSERT_MATCHHISTORY = "INSERT INTO MatchHistory{0} " +
+        const string INSERT_MATCHHISTORY = "INSERT INTO matchhistory{0} " +
                                            "VALUES (@param0, @param1, @param2, @param3, @param4, @param5, @param6, @param7, @param8, @param9, @param10," +
                                                   "@param11, @param12, @param13, @param14, @param15, @param16, @param17, @param18, @param19, @param20," +
                                                   "@param21, @param22, @param23, @param24, @param25)";
 
-        const string INSERT_MATCHPARTICIPANTS = "INSERT INTO MatchParticipants{0} " +
+        const string INSERT_MATCHPARTICIPANTS = "INSERT INTO matchparticipants{0} " +
                                                 "VALUES (@param1, @param2, @param3, @param4, @param5, @param6, @param7, @param8, @param9, @param10," +
                                                         "@param11, @param12, @param13, @param14, @param15, @param16, @param17, @param18, @param19, @param20," +
                                                         "@param21, @param22, @param23, @param24, @param25, @param26, @param27, @param28, @param29, @param30," +
@@ -32,25 +34,25 @@ namespace CutterBotCS.SQL
                                                         "@param91, @param92, @param93, @param94, @param95, @param96, @param97, @param98, @param99, @param100," +
                                                         "@param101, @param102, @param103)";
 
-        const string INSERT_PARTICIPANTSTATS = "INSERT INTO ParticipantStats{0} " +
+        const string INSERT_PARTICIPANTSTATS = "INSERT INTO participantstats{0} " +
                                                "VALUES (@param1, @param2, @param3, @param4, @param5, @param6, @param7)";
 
-        const string SELECT_MATCHHISTORY = "SELECT * FROM MatchHistory{0} WHERE matchid = @param1";
+        const string SELECT_MATCHHISTORY = "SELECT * FROM matchhistory{0} WHERE matchid = @param1";
 
-        const string SELECT_MATCHPARTICIPANT = "SELECT * FROM MatchParticipants{0} WHERE matchid = @param1 AND participantid = @param2";
+        const string SELECT_MATCHPARTICIPANT = "SELECT * FROM matchparticipants{0} WHERE matchid = @param1 AND participantid = @param2";
         
-        const string SELECT_PARTICIPANTSTATS = "SELECT * FROM ParticipantStats{0} WHERE matchid = @param1 AND participantid = @param2";
+        const string SELECT_PARTICIPANTSTATS = "SELECT * FROM participantstats{0} WHERE matchid = @param1 AND participantid = @param2";
 
         public SQLClient()
         {
             try
             {
-                string connectstring = "server=localhost;user=superuser;database=cutterlolgames;port=3306;password=CuntMuncher123";
+                string connectstring = "server=localhost;user=root;database=cutterlolgames;port=3306;password=CuntMuncher123";
                 m_Connection = new MySqlConnection(connectstring);
             }
             catch (Exception e)
             {
-
+                DiscordWorker.Log(String.Format("Error Connecting SQL: {0}", e.Message), LogType.Error);
             }
         }
 
@@ -107,6 +109,11 @@ namespace CutterBotCS.SQL
             }
 
             message = rowseffected == 1 ? string.Format("Match History Inserted: MatchId: {0}", gameid) : string.Format("No Match History Effected, Error: {0}", error);
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                DiscordWorker.Log(String.Format("Error Inserting Match History into SQL: {0}", error), LogType.Error);
+            }
         }
 
         /// <summary>
@@ -255,6 +262,11 @@ namespace CutterBotCS.SQL
             }
 
             message = rowseffected == 1 ? string.Format("Match Participants: MatchId: {0}", matchid) : string.Format("No Match Participants Effected, Error: {0}", error);
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                DiscordWorker.Log(String.Format("Error Inserting Match Participant into SQL: {0}", error), LogType.Error);
+            }
         }
 
         /// <summary>
@@ -288,6 +300,11 @@ namespace CutterBotCS.SQL
             }
 
             message = rowseffected == 1 ? string.Format("Participants Stats Inserted: MatchId: {0}", matchid) : string.Format("No Participants Stats Effected, Error: {0}", error);
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                DiscordWorker.Log(String.Format("Error Inserting Match Participant Stats into SQL: {0}", error), LogType.Error);
+            }
         }
 
         /// <summary>
@@ -308,10 +325,12 @@ namespace CutterBotCS.SQL
         private bool GetMatchHistoryMainInfo(string region, string matchid, Match match)
         {
             bool result = false;
+          
 
             try
             {
                 int[] participantids = new int[10];
+                bool rowfound = false;
                 using (MySqlCommand command = new MySqlCommand(string.Format(SELECT_MATCHHISTORY, region), m_Connection))
                 {
                     command.Parameters.AddWithValue("@param1", matchid);
@@ -320,6 +339,7 @@ namespace CutterBotCS.SQL
                     {
                         if (reader.Read())
                         {
+                            rowfound = true;
                             result = true;
                             match.Metadata = new Metadata();
                             match.Info = new Info();
@@ -378,19 +398,34 @@ namespace CutterBotCS.SQL
                     }
                 }
 
-                
-                match.Metadata.Participants = new string[10];
-                match.Info.Participants = new Participant[10];
 
-                for(int i = 0; i < participantids.Length; i++)
+                if (rowfound)
                 {
-                    match.Info.Participants[i] = GetParticipant(region, matchid, participantids[i]);
-                    match.Metadata.Participants[i] = match.Info.Participants[i].Puuid;
+                    //DiscordWorker.Log(String.Format("FOUND ROW: {0}", matchid), LogType.Info);
+                    match.Metadata.Participants = new string[10];
+                    match.Info.Participants = new Participant[10];
+
+                    for (int i = 0; i < participantids.Length; i++)
+                    {
+                        match.Info.Participants[i] = GetParticipant(region, matchid, participantids[i]);
+                        match.Metadata.Participants[i] = match.Info.Participants[i].Puuid;
+                    }
                 }
+                else
+                {
+                    //DiscordWorker.Log(String.Format("NOTFOUND ROW: {0}", matchid), LogType.Error);
+                }
+
             }
             catch (Exception e)
             {
-
+                // Get stack trace for the exception with source file information
+                var st = new StackTrace(e, true);
+                // Get the top stack frame
+                var frame = st.GetFrame(0);
+                // Get the line number from the stack frame
+                var line = frame.GetFileLineNumber();
+                DiscordWorker.Log(String.Format("Error Getting Match History in SQL: {0} | StackLine: {1}", e.ToString(), line), LogType.Error);               
             }
 
             return result;
@@ -526,7 +561,7 @@ namespace CutterBotCS.SQL
             }
             catch(Exception e)
             {
-
+                DiscordWorker.Log(String.Format("Error Getting Match Participant in SQL: {0}", e.Message), LogType.Error);
             }
             
 
@@ -574,7 +609,7 @@ namespace CutterBotCS.SQL
             }
             catch (Exception e)
             {
-
+                DiscordWorker.Log(String.Format("Error Getting Match Participant Stats in SQL: {0}", e.Message), LogType.Error);
             }
 
             return result;
@@ -585,9 +620,16 @@ namespace CutterBotCS.SQL
         /// </summary>
         public void Open()
         {
-            if (m_Connection.State != ConnectionState.Open)
+            try
             {
-                m_Connection.Open();
+                if (m_Connection.State != ConnectionState.Open)
+                {
+                    m_Connection.Open();
+                }
+            }
+            catch(Exception e)
+            {
+                DiscordWorker.Log(String.Format("Error Opening SQL Connection: {0}", e.Message), LogType.Error);
             }
         }
 
@@ -596,9 +638,16 @@ namespace CutterBotCS.SQL
         /// </summary>
         public void Close()
         {
-            if (m_Connection.State != ConnectionState.Closed)
+            try
             {
-                m_Connection.Close();
+                if (m_Connection.State != ConnectionState.Closed)
+                {
+                    m_Connection.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                DiscordWorker.Log(String.Format("Error Closing SQL Connection: {0}", e.Message), LogType.Error);
             }
         }
     }

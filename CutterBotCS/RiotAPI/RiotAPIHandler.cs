@@ -9,8 +9,8 @@ using Camille.RiotGames.MatchV5;
 using Camille.RiotGames.SummonerV4;
 using CutterBotCS.Helpers;
 using CutterBotCS.Modules.Leaderboard;
-using CutterBotCS.Modules.Riot;
 using CutterBotCS.SQL;
+using CutterBotCS.Worker;
 
 namespace CutterBotCS.RiotAPI
 {
@@ -246,6 +246,8 @@ namespace CutterBotCS.RiotAPI
                 catch(Exception e)
                 {
                     matches = new List<Match>();
+
+                    DiscordWorker.Log(String.Format("Getting Ranked Matches: {0}", e.Message), LogType.Error);
                 }
 
       
@@ -314,19 +316,19 @@ namespace CutterBotCS.RiotAPI
             switch (rr)
             {
                 case RegionalRoute.ASIA:
-                    region = "ASIA";
+                    region = "asia";
                     break;
                 case RegionalRoute.AMERICAS:
-                    region = "NA";
+                    region = "na";
                     break;
                 case RegionalRoute.EUROPE:
-                    region = "EUW";
+                    region = "euw";
                     break;
                 case RegionalRoute.SEA:
-                    region = "OCE";
+                    region = "oce";
                     break;
                 default:
-                    region = "EUW";
+                    region = "euw";
                     break;
             }
 

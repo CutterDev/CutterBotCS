@@ -82,7 +82,7 @@ namespace CutterBotCS.Modules.Leaderboard
         { 
             get
             {
-                return AppDomain.CurrentDomain.BaseDirectory + string.Format("Resources/Images/Leaderboard/{0}.png", DiscordId);
+                return string.Format(@"home/pi/CutterBot/Resources/Images/Leaderboard/{0}.png", DiscordId);
             } 
         }
     }

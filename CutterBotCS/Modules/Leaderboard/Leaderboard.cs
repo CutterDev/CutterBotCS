@@ -56,7 +56,7 @@ namespace CutterBotCS.Modules.Leaderboard
         private async void DrawTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             DateTime timenow = DateTime.UtcNow;
-
+       
             // Check its the 15th minute interval of the day
             if (m_TimerOnClockInterval || (timenow.Minute % 15 == 0 && timenow.Second == 0))
             {
@@ -82,7 +82,7 @@ namespace CutterBotCS.Modules.Leaderboard
         /// </summary>
         public async Task SendLeaderboard(List<LeaderboardEntry> entries, SocketTextChannel channel, bool usepodium)
         {
-            string image = AppDomain.CurrentDomain.BaseDirectory + "/Resources/Images/leaderboard.png";
+            string image = @"/home/pi/CutterBot/Resources/Images/leaderboard.png";
 
             if (m_CurrentLeaderboardMessage > 0)
             {

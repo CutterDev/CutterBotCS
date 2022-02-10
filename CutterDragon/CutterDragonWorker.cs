@@ -60,7 +60,7 @@ namespace CutterDragon
             bool noerror = false;
             try
             {
-                CutterData_Dir = @"C:\ProgramData\UmaruBot\CutterDragon\";
+                CutterData_Dir = @"/home/pi/CutterBot/CutterDragon";
                 noerror = true;
             }
             catch (Exception e)

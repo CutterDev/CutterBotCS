@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CutterBotCS.Discord;
+using CutterBotCS.Worker;
+using System;
 using System.IO;
 using System.Text.Json;
 
@@ -24,7 +26,7 @@ namespace CutterBotCS.Helpers
             }
             catch(Exception e)
             {
-
+                DiscordWorker.Log(String.Format("Error Serializing JSON File: {0}", e.Message), LogType.Error);
             }
 
             return result;
@@ -45,7 +47,7 @@ namespace CutterBotCS.Helpers
             } 
             catch(Exception e)
             {
-
+                DiscordWorker.Log(String.Format("Error Deserializing JSON File: {0}", e.Message), LogType.Error);
             }
 
             return result;
@@ -67,7 +69,7 @@ namespace CutterBotCS.Helpers
                 }
                 catch(Exception e)
                 {
-
+                    DiscordWorker.Log(String.Format("Error Deserializing JSON File: {0}", e.Message), LogType.Error);
                 }
             }
 
@@ -93,7 +95,7 @@ namespace CutterBotCS.Helpers
             }
             catch(Exception e)
             {
-
+                DiscordWorker.Log(String.Format("Error Deserializing from file JSON File: {0}", e.Message), LogType.Error);
             }
 
             return result;

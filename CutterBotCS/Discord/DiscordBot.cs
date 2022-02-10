@@ -4,6 +4,7 @@ using CutterBotCS.RiotAPI;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -22,7 +23,6 @@ namespace CutterBotCS.Discord
         private Leaderboard m_Leaderboard;
         private string m_Token;
         private string m_PlayersPath;
-
         public static RiotAPIHandler RiotHandler;
         public static CommandService BotCommandService;
         public static string CONFIG_DIR;
@@ -37,8 +37,8 @@ namespace CutterBotCS.Discord
         /// </summary>
         public DiscordBot()
         {
-            m_PlayersPath = AppDomain.CurrentDomain.BaseDirectory + "/Configuration/players.json";
-            CONFIG_DIR = AppDomain.CurrentDomain.BaseDirectory + "/Configuration";
+            m_PlayersPath = @"/home/pi/CutterBot/Configuration/players.json";
+            CONFIG_DIR = @"/home/pi/CutterBot/Configuration";
             CONFIG_FILENAME = "config.json";
         }
 
