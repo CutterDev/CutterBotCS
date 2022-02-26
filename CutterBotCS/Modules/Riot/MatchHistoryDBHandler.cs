@@ -1,10 +1,13 @@
 ﻿using Camille.Enums;
 using Camille.RiotGames.MatchV5;
 using CutterBotCS.Helpers;
+using CutterBotCS.RiotAPI;
 using CutterBotCS.Worker;
 using CutterDB.Entities;
 using CutterDB.Tables;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CutterBotCS.Modules.Riot
 {
@@ -13,74 +16,17 @@ namespace CutterBotCS.Modules.Riot
     /// </summary>
     public static class MatchHistoryDBHandler
     {
-        /// <summary>
-        /// Insert Match to Database
-        /// </summary>
-        public static bool InsertMatchToDatabase(Match match, string region)
+        public static async Task<List<Match>> GetMatchListAsync(RiotAPIHandler apihandler, string[] matchids, string region, RegionalRoute rr)
         {
-            bool result = false;
+            List<Match> matches = new List<Match>();
 
-            MatchHistoryTable matchhistorytable = new MatchHistoryTable();
-            string connstring = Properties.Settings.Default.LeagueDBConn;
-
-            string dberror = string.Empty;
-            matchhistorytable.OpenConnection(connstring, out dberror);
-            DiscordWorker.Log(dberror, LogType.Error);
-
-            var matchentity = GetMatchEntity(match);
-            matchhistorytable.InsertEntity(matchentity, region, out dberror);
-            DiscordWorker.Log(dberror, LogType.Error);
-
-            ParticipantTable participanttable = new ParticipantTable();
-            participanttable.OpenConnection(connstring, out dberror);
-            DiscordWorker.Log(dberror, LogType.Error);
-
-            ParticipantPerkStatsTable perkstable = new ParticipantPerkStatsTable();
-            perkstable.OpenConnection(connstring, out dberror);
-            DiscordWorker.Log(dberror, LogType.Error);
-
-            for (int i = 0; i < 10; i++)
+            if (matchids != null)
             {
-                var p = match.Info.Participants[i];
-                var pentity = GetParticipantEntity(match.Metadata.MatchId, p);
-                participanttable.InsertEntity(pentity, region, out dberror);
-                DiscordWorker.Log(dberror, LogType.Error);
+                string dberror;
+                string connstring = Properties.Settings.Default.LeagueDBConn;
 
-                var statsentity = GetParticipantPerkStats(match.Metadata.MatchId, p);
-                perkstable.InsertEntity(statsentity,region,  out dberror);
-                DiscordWorker.Log(dberror, LogType.Error);
-            }
-
-            matchhistorytable.CloseConnection(out dberror);
-            DiscordWorker.Log(dberror, LogType.Error);
-            participanttable.CloseConnection(out dberror);
-            DiscordWorker.Log(dberror, LogType.Error);
-
-            perkstable.CloseConnection(out dberror);
-            DiscordWorker.Log(dberror, LogType.Error);
-
-            result = !string.IsNullOrWhiteSpace(dberror);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Get Match From Database
-        /// </summary>
-        public static bool GetMatchFromDatabase(string matchid, string region, out Match match)
-        {
-            bool result = false;
-            match = null;
-            string dberror;
-            string connstring = Properties.Settings.Default.LeagueDBConn;
-
-            MatchHistoryTable matchhistorytable = new MatchHistoryTable();
-            matchhistorytable.OpenConnection(connstring, out dberror);
-
-            MatchEntity entity;
-            if (matchhistorytable.TryGetEntity(matchid, region, out entity, out dberror))
-            {
-                match = GetMatch(entity);
+                MatchHistoryTable matchhistorytable = new MatchHistoryTable();
+                matchhistorytable.OpenConnection(connstring, out dberror);
 
                 ParticipantTable participanttable = new ParticipantTable();
                 participanttable.OpenConnection(connstring, out dberror);
@@ -90,12 +36,92 @@ namespace CutterBotCS.Modules.Riot
                 perkstable.OpenConnection(connstring, out dberror);
                 DiscordWorker.Log(dberror, LogType.Error);
 
+                foreach (string matchid in matchids)
+                {
+                    Match match;
+                    if (!GetMatchFromDatabase(matchhistorytable, participanttable, perkstable, matchid, region, out match))
+                    {
+                        match = await apihandler.GetMatchFromMatchIdAsync(rr, matchid);
+
+                        if (match != null)
+                        {
+                            InsertMatchToDatabase(matchhistorytable, participanttable, perkstable, match, region);
+                        }              
+                    }
+
+                    matches.Add(match);
+                }
+
+                matchhistorytable.CloseConnection(out dberror);
+                DiscordWorker.Log(dberror, LogType.Error);
+                participanttable.CloseConnection(out dberror);
+                DiscordWorker.Log(dberror, LogType.Error);
+
+                perkstable.CloseConnection(out dberror);
+                DiscordWorker.Log(dberror, LogType.Error);
+            }
+
+
+            return matches;
+        }
+
+        /// <summary>
+        /// Insert Match to Database
+        /// </summary>
+        public static bool InsertMatchToDatabase(MatchHistoryTable matchtable, ParticipantTable ptable, ParticipantPerkStatsTable perkstable,
+                                                 Match match, string region)
+        {
+            bool result = false;
+
+            var matchentity = GetMatchEntity(match);
+
+            string dberror;
+            if (matchtable.InsertEntity(matchentity, region, out dberror))
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var p = match.Info.Participants[i];
+                    var pentity = GetParticipantEntity(match.Metadata.MatchId, p);
+                    ptable.InsertEntity(pentity, region, out dberror);
+                    DiscordWorker.Log(dberror, LogType.Error);
+
+                    var statsentity = GetParticipantPerkStats(match.Metadata.MatchId, p);
+                    perkstable.InsertEntity(statsentity, region, out dberror);
+                    DiscordWorker.Log(dberror, LogType.Error);
+                }
+            }
+
+            DiscordWorker.Log(dberror, LogType.Error);
+
+
+
+            result = !string.IsNullOrWhiteSpace(dberror);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get Match From Database
+        /// </summary>
+        public static bool GetMatchFromDatabase(MatchHistoryTable matchtable, ParticipantTable ptable, ParticipantPerkStatsTable perkstable, 
+                                                string matchid, string region, out Match match)
+        {
+            bool result = false;
+            match = null;
+            string dberror;
+            string connstring = Properties.Settings.Default.LeagueDBConn;
+
+            MatchEntity entity;
+            if (matchtable.TryGetEntity(matchid, region, out entity, out dberror))
+            {
+                match = GetMatch(entity);
+
                 for (int i = 0; i < match.Info.Participants.Length; i++)
                 {
                     var p = match.Info.Participants[i];
 
                     ParticipantEntity pentity;
-                    if (participanttable.TryGetEntity(matchid, p.ParticipantId, region, out pentity, out dberror))
+                    if (ptable.TryGetEntity(matchid, p.ParticipantId, region, out pentity, out dberror))
                     {
                         GetParticipantDetails(pentity, p);
 
@@ -103,6 +129,7 @@ namespace CutterBotCS.Modules.Riot
                         if (perkstable.TryGetEntity(matchid, p.ParticipantId, region, out perksentity, out dberror))
                         {
                             GetPerkStats(perksentity, p);
+                            result = true;
                         }
 
                         DiscordWorker.Log(dberror, LogType.Error);
@@ -110,14 +137,6 @@ namespace CutterBotCS.Modules.Riot
 
                     DiscordWorker.Log(dberror, LogType.Error);
                 }
-
-                matchhistorytable.CloseConnection(out dberror);
-                DiscordWorker.Log(dberror, LogType.Error);
-                participanttable.CloseConnection(out dberror);
-                DiscordWorker.Log(dberror, LogType.Error);
-                perkstable.CloseConnection(out dberror);
-                DiscordWorker.Log(dberror, LogType.Error);
-
             }
 
             DiscordWorker.Log(dberror, LogType.Error);

@@ -120,7 +120,7 @@ namespace CutterBotCS.Discord
                         ulong messageid = await SendLeaderboard(boys, stc, guild.Id, guild.LeaderboardTitle);
 
                         guild.LeaderboardMessageId = messageid;
-                        gt.UpdateLeaderboardMessageGuild(messageid, messageid, out gterror);
+                        gt.UpdateLeaderboardMessageGuild(guild.GuildId, messageid, out gterror);
                         DiscordWorker.Log(gterror, LogType.Error);
                     }
 

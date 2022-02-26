@@ -25,8 +25,7 @@ namespace CutterBotCS.Discord
         private CommandService m_BotCommandService;
         private IServiceCollection m_ServiceProvider;
         private Leaderboard m_Leaderboard;
-
-        public event ConnectedEventHandler connected;
+        private bool m_Initialized;
 
         /// <summary>
         /// Ctor
@@ -35,6 +34,7 @@ namespace CutterBotCS.Discord
         {
             m_DiscordToken = discordbottoken;
             m_Leaderboard = leaderboard;
+            m_Initialized = false;
         }
 
         /// <summary>
@@ -74,12 +74,12 @@ namespace CutterBotCS.Discord
         /// </summary>
         private async Task Connected()
         {
-            if (connected != null)
+            if (!m_Initialized)
             {
-                connected();
+                m_Initialized = false;
+                DiscordWorker.Log("CONNECTED BOT!", LogType.Info);
+                await GetGuildsAsync();
             }
-            DiscordWorker.Log("CONNECTED BOT!", LogType.Info);
-            await GetGuildsAsync();
         }
 
         /// <summary>
@@ -118,6 +118,7 @@ namespace CutterBotCS.Discord
         /// </summary>
         private async Task GetGuildsAsync()
         {
+
             GuildTable gt = new GuildTable();
             string guilderr;
             gt.OpenConnection(Properties.Settings.Default.BotDBConn, out guilderr);

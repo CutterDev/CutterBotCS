@@ -11,6 +11,7 @@ using Camille.RiotGames.SummonerV4;
 using CutterBotCS.Discord;
 using CutterBotCS.Modules.Riot;
 using CutterBotCS.Worker;
+using CutterDB.Tables;
 
 namespace CutterBotCS.RiotAPI
 {
@@ -72,6 +73,24 @@ namespace CutterBotCS.RiotAPI
             }
 
             return summ;
+        }
+
+        /// <summary>
+        /// Get Match From MatchId Async
+        /// </summary>
+        public async Task<Match> GetMatchFromMatchIdAsync(RegionalRoute rr, string matchid)
+        {
+            Match match = null;
+            try
+            {
+                match = await m_APIInstance.MatchV5().GetMatchAsync(rr, matchid);
+            }
+            catch (Exception e)
+            {
+                DiscordWorker.Log(string.Format("Error Getting Match5V: {0}", e.Message), LogType.Error);
+            }
+
+            return match;
         }
 
         /// <summary>
@@ -333,19 +352,7 @@ namespace CutterBotCS.RiotAPI
 
             string region = GetRegionCode(rr);
 
-
-            foreach (string matchid in matchlist)
-            {
-                Match match;
-                if (!MatchHistoryDBHandler.GetMatchFromDatabase(matchid, region, out match))
-                {
-                    match = await m_APIInstance.MatchV5().GetMatchAsync(rr, matchid);
-
-                    MatchHistoryDBHandler.InsertMatchToDatabase(match, region);
-                }
-
-                matches.Add(match);
-            }
+            matches = await MatchHistoryDBHandler.GetMatchListAsync(this, matchlist, region, rr);
 
             return matches;
         }
