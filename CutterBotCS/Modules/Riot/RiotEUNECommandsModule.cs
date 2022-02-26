@@ -1,4 +1,5 @@
 ﻿using Camille.Enums;
+using CutterBotCS.RiotAPI;
 using Discord.Commands;
 using System.Threading.Tasks;
 
@@ -11,13 +12,23 @@ namespace CutterBotCS.Modules.Riot
     public class RiotEUNECommandsModule : ModuleBase<SocketCommandContext>
     {
         /// <summary>
+        /// Riot Command Handler
+        /// </summary>
+        RiotCommandHandler m_RiotCommandHandler { get; set; }
+
+        public RiotEUNECommandsModule(RiotAPIHandler handler)
+        {
+            m_RiotCommandHandler = new RiotCommandHandler(handler);
+        }
+
+        /// <summary>
         /// Riot EUNE Mastery for a summoner, e.g. !RiotEUNE Mastery CutterHealer
         /// </summary>
         [Command("RiotEUNE Mastery")]
         [Summary("Gets top 10 Champion Masteries of a summoner")]
         public async Task EUNEMasteries([Remainder] string summonername)
         {
-            string message = await RiotCommandHelper.MasteryAsync(summonername, PlatformRoute.EUN1);
+            string message = await m_RiotCommandHandler.MasteryAsync(summonername, PlatformRoute.EUN1);
 
             await ReplyAsync(message);
         }
@@ -29,7 +40,7 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Get most recent 10 games of a summoner")]
         public async Task EUNEAsync([Remainder] string summonername)
         {
-            string message = await RiotCommandHelper.GetMatchHistoryAsync(summonername, PlatformRoute.EUN1, RegionalRoute.EUROPE);
+            string message = await m_RiotCommandHandler.GetMatchHistoryAsync(summonername, PlatformRoute.EUN1, RegionalRoute.EUROPE);
 
             await ReplyAsync(message);
         }       

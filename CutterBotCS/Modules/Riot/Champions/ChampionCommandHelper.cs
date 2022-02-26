@@ -13,16 +13,14 @@ namespace CutterDragon
         /// <summary>
         /// Cutter Dragon
         /// </summary>
-        private static CutterDragonWorker CutterDragon { get; set; }
+        private CutterDragonWorker m_CutterDragon { get; set; }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public ChampionCommandHelper()
+        public ChampionCommandHelper(CutterDragonWorker cdw)
         {
-            CutterDragon = new CutterDragonWorker();
-
-            CutterDragon.Initialize();
+            m_CutterDragon = cdw;
         }
 
         /// <summary>
@@ -36,7 +34,7 @@ namespace CutterDragon
             builder.Description = "Champion could not be found";
 
             ChampionModel model;
-            if (CutterDragon.TryGetChampionModel(championname, out model))
+            if (m_CutterDragon.TryGetChampionModel(championname, out model))
             {
                 builder.Author = new EmbedAuthorBuilder() { Name = "Umaru Bot [BETA]", IconUrl = "https://avatarfiles.alphacoders.com/140/140066.png" };
                 // Name

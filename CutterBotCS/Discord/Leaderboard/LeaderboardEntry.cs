@@ -1,18 +1,12 @@
 ﻿using Camille.Enums;
-using System;
 
-namespace CutterBotCS.Modules.Leaderboard
+namespace CutterBotCS.Discord
 {
     /// <summary>
     /// Leaderboard Entry
     /// </summary>
     public class LeaderboardEntry
     {
-        /// <summary>
-        /// Discord Id
-        /// </summary>
-        public ulong DiscordId { get; set; }
-
         /// <summary>
         /// League Id
         /// </summary>
@@ -73,17 +67,6 @@ namespace CutterBotCS.Modules.Leaderboard
             {
                 return Wins + Losses;
             }
-        }
-
-        /// <summary>
-        /// LogoPath for Entry
-        /// </summary>
-        public string LogoPath 
-        { 
-            get
-            {
-                return string.Format(@"home/pi/CutterBot/Resources/Images/Leaderboard/{0}.png", DiscordId);
-            } 
         }
     }
 

@@ -13,14 +13,11 @@ namespace CutterBotCS.Modules.Riot.Champions
         private ChampionCommandHelper m_ChampionHelper { get; set; }
 
         /// <summary>
-        /// Initialize the Champion Helper
+        /// Constructor
         /// </summary>
-        private void Initialize()
+        public ChampionModule(CutterDragonWorker cdw)
         {
-            if (m_ChampionHelper == null)
-            {
-                m_ChampionHelper = new ChampionCommandHelper();
-            }
+            m_ChampionHelper = new ChampionCommandHelper(cdw);
         }
 
         /// <summary>
@@ -30,8 +27,6 @@ namespace CutterBotCS.Modules.Riot.Champions
         [Summary("Get Champion Info")]
         public async Task ChampionInfoAsync([Remainder] string champion)
         {
-            Initialize();
-
             EmbedBuilder builder = m_ChampionHelper.GetChampionInfo(champion);
 
             await Context.Channel.SendMessageAsync("", false, builder.Build());

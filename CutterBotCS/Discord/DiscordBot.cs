@@ -1,11 +1,12 @@
 ﻿using CutterBotCS.Modules;
-using CutterBotCS.Modules.Leaderboard;
-using CutterBotCS.RiotAPI;
+using CutterBotCS.Worker;
+using CutterDB.Entities;
+using CutterDB.Tables;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using System;
+using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace CutterBotCS.Discord
@@ -18,44 +19,36 @@ namespace CutterBotCS.Discord
     /// </summary>
     public class DiscordBot
     {
-        private CommandHandler m_BotCommandHandler;
-        private DiscordSocketClient m_Client;
+        private readonly string m_DiscordToken;
+        private DiscordSocketClient m_SocketClient;
+        private CommandHandler m_BotCommandHandler; 
+        private CommandService m_BotCommandService;
+        private IServiceCollection m_ServiceProvider;
         private Leaderboard m_Leaderboard;
-        private string m_Token;
-        private string m_PlayersPath;
-        public static RiotAPIHandler RiotHandler;
-        public static CommandService BotCommandService;
-        public static string CONFIG_DIR;
-        public static string CONFIG_FILENAME;
-        public const long ETHAN = 217599819202560000;
-        public const string BOYZ = "Boyz";
 
         public event ConnectedEventHandler connected;
 
         /// <summary>
         /// Ctor
         /// </summary>
-        public DiscordBot()
+        public DiscordBot(string discordbottoken, Leaderboard leaderboard)
         {
-            m_PlayersPath = @"/home/pi/CutterBot/Configuration/players.json";
-            CONFIG_DIR = @"/home/pi/CutterBot/Configuration";
-            CONFIG_FILENAME = "config.json";
+            m_DiscordToken = discordbottoken;
+            m_Leaderboard = leaderboard;
         }
 
         /// <summary>
         /// Main Async
         /// </summary>
         /// <returns></returns>
-        public async Task Initialize()
+        public async Task Initialize(IServiceCollection serviceprovider)
         {
-            m_Token = Properties.Settings.Default.DiscordToken;
-            RiotHandler = new RiotAPIHandler(m_PlayersPath);
-            BotCommandService = new CommandService();
+            m_ServiceProvider = serviceprovider;
 
-            //
-            // Init Riot Handler
-            //
-            RiotHandler.Initialize();
+            DiscordWorker.Log(string.Format("Initializing Bot"), LogType.Info);
+            m_BotCommandService = new CommandService(new CommandServiceConfig { DefaultRunMode = RunMode.Async });
+
+            m_BotCommandService.Log += LogHandlerAsync;
 
             //
             // Init Client
@@ -63,59 +56,144 @@ namespace CutterBotCS.Discord
             var config = new DiscordSocketConfig
             {
                 AlwaysDownloadUsers = false,
-                MessageCacheSize = 100
+                MessageCacheSize = 100,                   
             };
-            m_Client = new DiscordSocketClient();
 
-            m_Client.Log += Log;
-            m_Client.Connected += Connected;
+            m_SocketClient = new DiscordSocketClient();
 
-            await m_Client.LoginAsync(TokenType.Bot, m_Token);
-            await m_Client.StartAsync();
+            m_SocketClient.Log += Log;
+            m_SocketClient.Connected += Connected;
+            m_SocketClient.JoinedGuild += BotJoinedGuild;
 
-            // 
-            // Init CommandHandler
-            //
-            m_BotCommandHandler = new CommandHandler(m_Client, BotCommandService);
-            await m_BotCommandHandler.InstallCommandsAsync();
-
-            //
-            // Init Leaderboard
-            //
-            m_Leaderboard = new Leaderboard(RiotHandler, m_Client);
-            m_Leaderboard.Initialize();
+            await m_SocketClient.LoginAsync(TokenType.Bot, m_DiscordToken);
+            await m_SocketClient.StartAsync();
         }
 
         /// <summary>
         /// Connected Event
         /// </summary>
-        private Task Connected()
+        private async Task Connected()
         {
             if (connected != null)
             {
                 connected();
             }
-
-
-            return Task.CompletedTask;
+            DiscordWorker.Log("CONNECTED BOT!", LogType.Info);
+            await GetGuildsAsync();
         }
 
         /// <summary>
-        /// Log
+        /// Discord Bot Log Event
         /// </summary>
         private Task Log(LogMessage arg)
         {
-            // TODO: Log Something
+            DiscordWorker.Log(arg.Message, LogType.Info);
 
             return Task.CompletedTask;
         }
 
         /// <summary>
-        /// Is Id Ethan
+        /// Bot Joined Guild
         /// </summary>
-        public static bool IsEthan(ulong id)
+        private Task BotJoinedGuild(SocketGuild arg)
         {
-            return id == ETHAN;
+            GuildTable gt = new GuildTable();
+            string errormsg;
+            gt.OpenConnection(Properties.Settings.Default.BotDBConn, out errormsg);
+            DiscordWorker.Log(errormsg, LogType.Info);
+
+            gt.InsertGuild(new GuildEntity() { GuildId = arg.Id }, out errormsg);
+            DiscordWorker.Log(errormsg, LogType.Info);
+
+            gt.CloseConnection(out errormsg);
+            DiscordWorker.Log(errormsg, LogType.Info);
+
+            m_BotCommandHandler.AddNewGuild(arg.Id, GuildItem.DEFAULT_PREFIX);
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Get Guilds Async
+        /// </summary>
+        private async Task GetGuildsAsync()
+        {
+            GuildTable gt = new GuildTable();
+            string guilderr;
+            gt.OpenConnection(Properties.Settings.Default.BotDBConn, out guilderr);
+            DiscordWorker.Log(guilderr, LogType.Error);
+
+            List<GuildItem> guilds = new List<GuildItem>();
+            Dictionary<ulong, char> guildprefixes = new Dictionary<ulong, char>();
+            foreach (var guild in m_SocketClient.Guilds)
+            {
+                GuildEntity entity;
+                GuildItem gi = new GuildItem();
+
+                if (gt.TryGetGuild(guild.Id, out entity, out guilderr))
+                {   
+                    gi.Id = entity.Id;
+                    gi.GuildId = entity.GuildId;
+                    gi.Prefix = entity.Prefix;
+                    gi.LeaderboardChannelId = entity.TCLeaderboardId;
+                    gi.LeaderboardMessageId = entity.LeaderboardLatestMessageId;
+                    gi.LeaderboardTitle = entity.LeaderboardTitle;
+                }
+                else
+                {
+                    entity = new GuildEntity();
+
+                    gt.InsertGuild(entity, out guilderr);
+                }
+                DiscordWorker.Log(guilderr, LogType.Error);
+
+                guildprefixes.Add(gi.GuildId, gi.Prefix);
+                guilds.Add(gi);
+            }
+
+            gt.CloseConnection(out guilderr);
+            DiscordWorker.Log(guilderr, LogType.Error);
+
+            m_Leaderboard.Initialize(guilds, this);
+
+            // 
+            // Init CommandHandler
+            //
+            m_BotCommandHandler = new CommandHandler(m_SocketClient, m_BotCommandService, m_ServiceProvider.BuildServiceProvider(), guildprefixes);
+            await m_BotCommandHandler.InstallCommandsAsync();
+        }
+
+        /// <summary>
+        /// Get SocketTextChannel
+        /// </summary>
+        public bool TryGetSocketTextChannel(ulong guildid, ulong socketchannelid, out SocketTextChannel stc)
+        {
+            stc = null;
+
+            if (m_SocketClient.ConnectionState == ConnectionState.Connected)
+            {
+                var guild = m_SocketClient.GetGuild(guildid);
+
+                if (guild != null)
+                {
+                    stc = guild.GetTextChannel(socketchannelid);
+                }
+            }
+
+            return stc != null;
+        }
+
+        /// <summary>
+        /// Log Handler
+        /// </summary>
+        public Task LogHandlerAsync(LogMessage logMessage)
+        {
+            if (logMessage.Exception is CommandException cmdEx)
+            {
+                DiscordWorker.Log($"{cmdEx.GetBaseException().GetType()} was thrown while executing {cmdEx.Command.Aliases.ToString()} in {cmdEx.Context.Channel} by {cmdEx.Context.User}.", LogType.Error);
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

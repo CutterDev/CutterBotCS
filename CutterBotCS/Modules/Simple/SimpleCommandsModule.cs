@@ -23,27 +23,5 @@ namespace CutterBotCS.Modules.Simple
         [Command("dn")]
         [Summary("???")] // Deez Nuts
         public Task DNAsync() => ReplyAsync("https://tenor.com/view/testing-new-deez-nuts-ha-teeth-gif-15758045");
-
-        // ~say Command List for Players
-        [Command("Help")]
-        [Summary("Show commands for Umaru")]
-        public Task HelpAsync() => ReplyAsync(HelpCommands.GetHelpList(DiscordBot.BotCommandService.Commands));
-
-
-        // ~say Command List for Players
-        [Command("Save")]
-        [Summary("Save Discord Bot")]
-        public Task TaskSaveAsync()
-        {
-            if (DiscordBot.IsEthan(Context.User.Id))
-            {
-                HelpCommands.Save(DiscordBot.CONFIG_DIR, DiscordBot.CONFIG_FILENAME);
-                return ReplyAsync("Might of saved. Fuck knows.");
-            }
-            else
-            {
-                return ReplyAsync("You are not Ethan. feck off.");
-            }
-        }
     }
 }

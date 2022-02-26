@@ -1,5 +1,4 @@
-﻿using CutterBotCS.Discord;
-using CutterBotCS.Worker;
+﻿using CutterBotCS.Worker;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -11,6 +10,31 @@ namespace CutterBotCS.Helpers
     /// </summary>
     public static class JsonHelper
     {
+        /// <summary>
+        /// Try Serialize To File
+        /// </summary>    
+        public static bool TrySerializeToFile<T>(T obj, string path)
+        {
+            bool result = false;
+
+            string json;
+            if (TrySerialize<T>(obj, out json))
+            {
+                try
+                {
+                    File.WriteAllText(path, json);
+                    result = true;
+                }
+                catch (Exception e)
+                {
+                    DiscordWorker.Log(String.Format("Error Serializing JSON to File: {0}", e.Message), LogType.Error);
+                }
+            }
+
+
+            return result;
+        }
+
         /// <summary>
         /// Serialize
         /// </summary>

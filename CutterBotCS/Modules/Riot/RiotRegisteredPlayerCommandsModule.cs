@@ -1,5 +1,8 @@
-﻿using Discord;
+﻿using CutterBotCS.RiotAPI;
+using CutterBotCS.Worker;
+using Discord;
 using Discord.Commands;
+using System;
 using System.Threading.Tasks;
 
 namespace CutterBotCS.Modules.Riot
@@ -10,18 +13,27 @@ namespace CutterBotCS.Modules.Riot
     public class RiotRegisteredPlayerCommandsModule : ModuleBase<SocketCommandContext>
     {
         /// <summary>
+        /// Riot Command Handler
+        /// </summary>
+        private RiotCommandHandler m_RiotCommandHandler { get; set; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public RiotRegisteredPlayerCommandsModule(RiotAPIHandler handler)
+        {
+            m_RiotCommandHandler = new RiotCommandHandler(handler);
+        }
+
+        /// <summary>
         /// Leaderboard no longer is draw from command. Leaderboard.cs handles it
         /// </summary>
         /// <returns></returns>
         [Command("leaderboard")]
         [Summary("Due to too much spam inbetween convos of said bot. Use #Leaderboard to see the stats.")]
-        [RequireUserPermission(ChannelPermission.SendMessages, Group = "boyz")]
         public async Task LeaderboardCommandAsync()
         {
-            string channel = Properties.Settings.Default.DiscordLeaderboardChannelId > 0 ? string.Format("<#{0}>", Properties.Settings.Default.DiscordLeaderboardChannelId)
-                                                                                         : "Unknown";
-
-            await ReplyAsync(string.Format("Due to too much spam inbetween convos of said bot. Use {0} to see the stats.", channel));
+            await ReplyAsync("See leaderboardchannel to see the stats.");
         }
 
         /// <summary>
@@ -31,7 +43,17 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Gets top 10 Champion Masteries for Registered Player")]
         public async Task RegisteredMasteries()
         {
-            string message = await RiotCommandHelper.GetRegisteredPlayerMasteryAsync(Context.User.Id);
+            string message = "Cannot find masteries";
+
+            try
+            {
+                message = await m_RiotCommandHandler.GetRegisteredPlayerMasteryAsync(Context.User.Id, Context.Guild.Id);
+            }
+            catch (Exception e)
+            {
+                DiscordWorker.Log(string.Format("Error getting mastery: {0}", e.Message), LogType.Error);
+                message = "Error occured. Contact CutterHealer#0001";
+            }
 
             await ReplyAsync(message);
         }   
@@ -44,7 +66,7 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Get most recent 10 games for registered Player")]
         public async Task RegisteredMatchHistoryAsync()
         {
-            EmbedBuilder message = await RiotCommandHelper.GetRegisteredPlayerHistoryAsync(Context.User.Id);
+            EmbedBuilder message = await m_RiotCommandHandler.GetRegisteredPlayerHistoryAsync(Context.User.Id, Context.Guild.Id);
 
             await ReplyAsync(embed: message.Build());
         }

@@ -1,7 +1,7 @@
 ﻿using SixLabors.Fonts;
 using SixLabors.ImageSharp.Drawing.Processing;
 
-namespace CutterBotCS.Modules.Leaderboard
+namespace CutterBotCS.Discord
 {
     /// <summary>
     /// Text Options Helper

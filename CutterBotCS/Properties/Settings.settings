@@ -2,23 +2,11 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="CutterBotCS.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="RiotApiToken" Type="System.String" Scope="User">
+    <Setting Name="BotDBConn" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="CommandPrefix" Type="System.Char" Scope="User">
-      <Value Profile="(Default)">?</Value>
-    </Setting>
-    <Setting Name="DiscordToken" Type="System.String" Scope="User">
+    <Setting Name="LeagueDBConn" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="Setting" Type="System.UInt64" Scope="User">
-      <Value Profile="(Default)">0</Value>
-    </Setting>
-    <Setting Name="DiscordGuildId" Type="System.UInt64" Scope="User">
-      <Value Profile="(Default)">0</Value>
-    </Setting>
-    <Setting Name="DiscordLeaderboardChannelId" Type="System.UInt64" Scope="User">
-      <Value Profile="(Default)">0</Value>
     </Setting>
   </Settings>
 </SettingsFile>

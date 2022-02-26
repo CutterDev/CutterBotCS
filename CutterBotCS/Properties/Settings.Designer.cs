@@ -26,72 +26,24 @@ namespace CutterBotCS.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string RiotApiToken {
+        public string BotDBConn {
             get {
-                return ((string)(this["RiotApiToken"]));
+                return ((string)(this["BotDBConn"]));
             }
             set {
-                this["RiotApiToken"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("?")]
-        public char CommandPrefix {
-            get {
-                return ((char)(this["CommandPrefix"]));
-            }
-            set {
-                this["CommandPrefix"] = value;
+                this["BotDBConn"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string DiscordToken {
+        public string LeagueDBConn {
             get {
-                return ((string)(this["DiscordToken"]));
+                return ((string)(this["LeagueDBConn"]));
             }
             set {
-                this["DiscordToken"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public ulong Setting {
-            get {
-                return ((ulong)(this["Setting"]));
-            }
-            set {
-                this["Setting"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public ulong DiscordGuildId {
-            get {
-                return ((ulong)(this["DiscordGuildId"]));
-            }
-            set {
-                this["DiscordGuildId"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public ulong DiscordLeaderboardChannelId {
-            get {
-                return ((ulong)(this["DiscordLeaderboardChannelId"]));
-            }
-            set {
-                this["DiscordLeaderboardChannelId"] = value;
+                this["LeagueDBConn"] = value;
             }
         }
     }
