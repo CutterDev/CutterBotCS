@@ -104,7 +104,7 @@ namespace CutterBotCS.Worker
         /// </summary>
         private void Log(LogItem item)
         {
-            if (string.IsNullOrWhiteSpace(item.Message))
+            if (!string.IsNullOrWhiteSpace(item.Message))
             {
                 switch (item.LogType)
                 {
