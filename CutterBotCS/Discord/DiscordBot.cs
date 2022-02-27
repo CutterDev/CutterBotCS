@@ -76,7 +76,7 @@ namespace CutterBotCS.Discord
         {
             if (!m_Initialized)
             {
-                m_Initialized = false;
+                m_Initialized = true;
                 DiscordWorker.Log("CONNECTED BOT!", LogType.Info);
                 await GetGuildsAsync();
             }
