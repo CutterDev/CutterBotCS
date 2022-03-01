@@ -8,6 +8,14 @@ namespace CutterDB.Entities
     public class GuildEntity
     {
         /// <summary>
+        /// Constructor
+        /// </summary>
+        public GuildEntity()
+        {
+            LeaderboardTitle = string.Empty;
+        }
+
+        /// <summary>
         /// Bot's Guid to the Guild
         /// </summary>
         public string Id { get; set; }

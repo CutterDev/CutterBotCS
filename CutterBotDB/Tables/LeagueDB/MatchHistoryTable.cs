@@ -13,6 +13,8 @@ namespace CutterDB.Tables
         MySqlConnection m_SqlConnection { get; set; }
 
         #region Query Strings
+        const string EXISTS_MATCHHISTORY = "SELECT COUNT(*) FROM matchhistory{0} WHERE (matchid = @param1)";
+
         const string INSERT_MATCHHISTORY = "INSERT INTO matchhistory{0} " +
                                    "VALUES (@param0, @param1, @param2, @param3, @param4, @param5, @param6, @param7, @param8, @param9, @param10," +
                                           "@param11, @param12, @param13, @param14, @param15, @param16, @param17, @param18, @param19, @param20," +
@@ -36,6 +38,47 @@ namespace CutterDB.Tables
             {
                 message = string.Format("Error Connecting to Match History Table SQL: {0}", e.Message);
             }
+        }
+
+        /// <summary>
+        /// Entity Exists
+        /// </summary>
+        public bool EntityExists(string matchid, string region, out string message)
+        {
+            int rowsfound = 0;
+            message = string.Empty;
+            string error = string.Empty;
+            string commandtext = string.Empty;
+
+            if (m_SqlConnection.State == ConnectionState.Open)
+            {
+                try
+                {
+                    using (MySqlCommand cmd = new MySqlCommand(string.Format(EXISTS_MATCHHISTORY, region), m_SqlConnection))
+                    {
+                        cmd.Parameters.Add("@param0", MySqlDbType.String).Value = matchid;
+
+                        commandtext = cmd.CommandText;
+                        cmd.CommandType = CommandType.Text;
+                        rowsfound = (int)cmd.ExecuteScalar();
+                    }
+                }
+                catch (Exception e)
+                {
+                    error = e.Message;
+                }
+
+                if (!string.IsNullOrWhiteSpace(error))
+                {
+                    message += string.Format("Command{0}\r\n Error: {1}", commandtext, error);
+                }
+            }
+            else
+            {
+                message = "Not Connected to SQL.";
+            }
+
+            return rowsfound > 0;
         }
 
         /// <summary>

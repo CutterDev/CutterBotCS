@@ -57,7 +57,7 @@ namespace CutterBotCS.Discord
             }
             catch(Exception e)
             {
-                DiscordWorker.Log(string.Format("Error Installing Fonts: {0}", e.Message), LogType.Error);
+                DiscordWorker.Log(string.Format("LeaderboardError Installing Fonts: {0}", e.Message), LogType.Error);
             }            
         }
 

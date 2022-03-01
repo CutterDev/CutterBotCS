@@ -1,8 +1,9 @@
-﻿using CutterBotCS.RiotAPI;
+﻿using CutterBotCS.Discord;
+using CutterBotCS.RiotAPI;
 using CutterBotCS.Worker;
-using Discord;
 using Discord.Commands;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace CutterBotCS.Modules.Riot
@@ -66,9 +67,67 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Get most recent 10 games for registered Player")]
         public async Task RegisteredMatchHistoryAsync()
         {
-            EmbedBuilder message = await m_RiotCommandHandler.GetRegisteredPlayerHistoryAsync(Context.User.Id, Context.Guild.Id);
+            var discordid = Context.User.Id;
 
-            await ReplyAsync(embed: message.Build());
+            DiscordWorker.Log(string.Format("User: {0} used match History", discordid), LogType.Info);
+            if (DiscordBot.MessageHandler.ContainsMessage(discordid))
+            {
+                await ReplyAsync("You already used match history in the last 1 minute! Either select a match or wait.");
+            }
+            else
+            {
+                KeyValuePair<ulong, MatchHistoryEmbedModel> model = await m_RiotCommandHandler.GetRegisteredPlayerHistoryAsync(discordid, Context.Guild.Id);
+
+                if (model.Value != null)
+                {
+                    var usermessage = await ReplyAsync(embed: model.Value.Embed.Build());
+
+                    // Get Client, Guild Id, TextChannel Id, Message Id
+                    // where the message came from
+                    model.Value.GuildId = Context.Guild.Id;
+                    model.Value.HistoryTextChannelId = Context.Channel.Id;
+                    model.Value.HistoryMessageId = usermessage.Id;
+                    model.Value.Timestamp = DateTime.Now;
+
+                    DiscordBot.MessageHandler.AddNewMessageModel(model.Key, model.Value);
+                }
+                else
+                {
+                    await ReplyAsync("Error occured please contact CutterHealer#001");
+                }
+            }
+
+        }
+
+        [Command("SelectMatch")]
+        [Summary("Select Match History from the recent games displayed")]
+        public async Task SelectMatchAsync(int matchnumber)
+        {
+            if (matchnumber > 0 && matchnumber < 11)
+            {
+                MatchHistoryEmbedModel model;
+                if (DiscordBot.MessageHandler.TryGetModel(Context.User.Id, out model))
+                {
+                    try
+                    {
+                        var embedbuilder = await m_RiotCommandHandler.GetMatch(model.MatchIds[matchnumber - 1], model.RegionalRoute);
+       
+                        await ReplyAsync(embed: embedbuilder.Build());
+                    }
+                    catch (Exception e)
+                    {
+                        DiscordWorker.Log(string.Format("Error Making Match Model: {0}",e.Message), LogType.Error);
+                    }
+                }
+                else
+                {
+                    await ReplyAsync("Please use !history first before selecting a match");
+                }
+            }
+            else
+            {
+                await ReplyAsync("Please select a match between 1 and 10");
+            }
         }
     }
 }

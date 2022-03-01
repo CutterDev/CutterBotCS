@@ -1,5 +1,7 @@
 ﻿using Camille.Enums;
+using Camille.RiotGames.MatchV5;
 using Camille.RiotGames.SummonerV4;
+using CutterBotCS.Discord;
 using CutterBotCS.RiotAPI;
 using CutterBotCS.Worker;
 using CutterDB.Entities;
@@ -30,93 +32,149 @@ namespace CutterBotCS.Modules.Riot
         /// <summary>
         /// Get registered player's 10 most recent ranked games
         /// </summary>
-        public async Task<EmbedBuilder> GetRegisteredPlayerHistoryAsync(ulong discordid, ulong guildid)
+        public async Task<KeyValuePair<ulong, MatchHistoryEmbedModel>> GetRegisteredPlayerHistoryAsync(ulong discordid, ulong guildid)
         {
-            var embed = new EmbedBuilder();
+            MatchHistoryEmbedModel model = null;
+
 
             PlayerEntity entity;
             string playerserror;
 
             PlayersTable pt = new PlayersTable();
             pt.OpenConnection(Properties.Settings.Default.BotDBConn, out playerserror);
+            DiscordWorker.Log(playerserror, LogType.Error);
 
             if (pt.TryGetPlayer(guildid, discordid, out entity, out playerserror))
             {
-                embed.Title = entity.SummonerName;
-                embed.Description = "Top 10 most recent ranked games";
-                List<string> matches = await m_RiotAPIHandler.GetRankedHistoryByNameAsync(entity.SummonerName, (PlatformRoute)entity.PlatformRoute, (RegionalRoute)entity.RegionalRoute);
+                model = await GetEmbedMatchModel(entity.SummonerName, (PlatformRoute)entity.PlatformRoute, (RegionalRoute)entity.RegionalRoute);
+            }
 
-                int count = 1;
-                
-                if (matches != null && matches.Count > 0)
+            DiscordWorker.Log(playerserror, LogType.Error);
+
+            pt.CloseConnection(out playerserror);
+            DiscordWorker.Log(playerserror, LogType.Error);
+            return new KeyValuePair<ulong, MatchHistoryEmbedModel>(discordid, model);
+        }
+
+        /// <summary>
+        /// Get Match as Embed
+        /// </summary>
+        public async Task<EmbedBuilder> GetMatch(string matchid, RegionalRoute rr)
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+
+            Match match = await m_RiotAPIHandler.GetMatchFromMatchIdAsync(rr, matchid);
+
+            if (match != null)
+            {
+                var team1 = new List<Participant>();    
+                var team2 = new List<Participant>();
+                var team1id = match.Info.Teams[0].TeamId;
+
+                foreach(var p in match.Info.Participants)
                 {
-                    foreach (string match in matches)
+                    if (p.TeamId == team1id)
                     {
-                        embed.AddField("Match " + count, match);
-
-                        count++;
+                        team1.Add(p);
+                    }
+                    else
+                    {
+                        team2.Add(p);
                     }
                 }
-                else
+
+                string[] matchstats = new string[5];
+                foreach(var p in team1)
                 {
-                    embed.AddField("ERROR GETTING MATCH", "ERROR");
+                    int teampos = GetLaneNumber(p.TeamPosition);
+
+                    foreach(var p2 in team2)
+                    {
+                        if (GetLaneNumber(p2.TeamPosition) == teampos)
+                        {
+                            matchstats[teampos] = string.Format("{0} | {1} {2}/{3}/{4} ", p.SummonerName, p.ChampionName, p.Kills, p.Deaths, p.Assists) +
+                                                  string.Format("{0}/{1}/{2} {3} | {4}", p2.Kills, p2.Deaths, p2.Assists, p2.ChampionName, p2.SummonerName);
+                        }
+                    }
+                }
+
+                for (int i = 0; i < matchstats.Length; i++)
+                {
+                    builder.AddField(string.Format("Match {0}" + (i + 1)), matchstats[i]);  
                 }
             }
             else
             {
-                embed.Description = "Player does not have a Summoner Registered";
+                builder.AddField("ERROR", "Error getting match. Please contact CutterHealer#0001");
             }
-            pt.CloseConnection(out playerserror);
 
-            return embed;
+            return builder;
+        }
+
+        private int GetLaneNumber(string teamposition)
+        {
+            int lane;
+
+            switch (teamposition.ToUpper())
+            {
+                case "TOP":
+                    lane = 0;
+                    break;
+                case "JUNGLE":
+                    lane = 1;
+                    break;
+                case "MIDDLE":
+                    lane = 2;
+                    break;
+                case "BOTTOM":
+                    lane = 3;
+                    break;
+                case "UTILITY":
+                    lane = 4;
+                    break;
+                default:
+                    lane = -1;
+                    break;
+            }
+
+            return lane;
         }
 
         /// <summary>
-        /// Get 10 most recent ranked games for a Summoner
+        /// Get Embed Match Model
         /// </summary>
-        public async Task<List<string>> GetMatchHistoryEmbedAsync(string name, PlatformRoute pr, RegionalRoute rr)
+        public async Task<MatchHistoryEmbedModel> GetEmbedMatchModel(string summonername, PlatformRoute pr, RegionalRoute rr)
         {
-            List<string> matches = new List<string>();
-
-            if (!string.IsNullOrWhiteSpace(name))
+            MatchHistoryEmbedModel model = new MatchHistoryEmbedModel()
             {
-                List<string> history = await m_RiotAPIHandler.GetRankedHistoryByNameAsync(name, pr, rr);
-                if (history != null && history.Count > 0)
-                {
-                    foreach (string match in history)
-                    {
-                        matches.Add(match);
-                    }
+                Embed = new EmbedBuilder()
+            };
 
-                }
-            }
-            return matches;
-        }
+            model.Embed.Title = summonername;
+            model.Embed.Description = "Top 10 most recent ranked games";
+            Dictionary<string, string> matches = await m_RiotAPIHandler.GetRankedHistoryByNameAsync(summonername, pr, rr);
 
-        /// <summary>
-        /// Get 10 most recent ranked games for a Summoner
-        /// </summary>
-        public async Task<string> GetMatchHistoryAsync(string name, PlatformRoute pr, RegionalRoute rr)
-        {
-            StringBuilder message = new StringBuilder();
+            int count = 0;
 
-            message.Append("No Match History for this Summoner found try again.");
-
-            if (!string.IsNullOrWhiteSpace(name))
+            if (matches != null && matches.Count > 0)
             {
-                List<string> history = await m_RiotAPIHandler.GetRankedHistoryByNameAsync(name, pr, rr);
-                if (history != null && history.Count > 0)
+                foreach (KeyValuePair<string, string> match in matches)
                 {
-                    message.Clear();
-                    message.AppendLine(string.Format("== {0} 10 Most Recent Ranked Games ==", name));
-                    foreach (string match in history)
-                    {
-                        message.AppendLine(match);
-                    }
+                    model.MatchIds[count] = match.Key;
+                    model.Embed.AddField("Match " + (++count), match.Value);
 
+      
                 }
+
+                model.RegionalRoute = rr;
+                model.Embed.Footer = new EmbedFooterBuilder() { Text = "Select a match to view! e.g. !selectmatch 1" };
             }
-            return message.ToString();
+            else
+            {
+                model.Embed.AddField("ERROR GETTING MATCH", "ERROR");
+            }
+
+            return model;
         }
 
         /// <summary>
@@ -201,7 +259,7 @@ namespace CutterBotCS.Modules.Riot
             Summoner summoner = null;
             try
             {
-                summoner = await m_RiotAPIHandler.GetSummonerAsync(pr, name);
+                summoner = await m_RiotAPIHandler.GetSummonerBySummonerNameAsync(pr, name);
             }
             catch(Exception e)
             {

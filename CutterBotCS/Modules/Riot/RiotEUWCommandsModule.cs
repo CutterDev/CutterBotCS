@@ -1,4 +1,5 @@
 ﻿using Camille.Enums;
+using CutterBotCS.Discord;
 using CutterBotCS.RiotAPI;
 using Discord.Commands;
 using System.Threading.Tasks;
@@ -44,9 +45,16 @@ namespace CutterBotCS.Modules.Riot
         [Summary("Get most recent 10 games of a summoner")]
         public async Task MatchHistoryEUWAsync([Remainder] string summonername)
         {
-            string message = await m_RiotCommandHandler.GetMatchHistoryAsync(summonername, PlatformRoute.EUW1, RegionalRoute.EUROPE);
+            MatchHistoryEmbedModel model = await m_RiotCommandHandler.GetEmbedMatchModel(summonername, PlatformRoute.EUW1, RegionalRoute.EUROPE);
 
-            await ReplyAsync(message);
+            if (model != null)
+            {
+                await ReplyAsync(embed: model.Embed.Build());
+            }
+            else
+            {
+                await ReplyAsync("Error occured please contact CutterHealer#001");
+            }
         }
     }
 }

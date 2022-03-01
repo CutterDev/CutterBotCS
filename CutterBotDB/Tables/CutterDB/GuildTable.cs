@@ -131,13 +131,15 @@ namespace CutterDB.Tables
                 {
                     using (MySqlCommand cmd = new MySqlCommand(INSERT_GUILD, m_SqlConnection))
                     {
-                        cmd.Parameters.Add("@param1", MySqlDbType.UInt64).Value = Guid.NewGuid().ToString();
+                        cmd.Parameters.Add("@param1", MySqlDbType.VarChar).Value = Guid.NewGuid().ToString();
                         cmd.Parameters.Add("@param2", MySqlDbType.UInt64).Value = entity.GuildId;
                         cmd.Parameters.Add("@param3", MySqlDbType.DateTime).Value = DateTime.Now;
                         cmd.Parameters.Add("@param4", MySqlDbType.VarChar).Value = entity.Prefix;
                         cmd.Parameters.Add("@param5", MySqlDbType.UInt64).Value = entity.TCLeaderboardId;
-                        cmd.Parameters.Add("@param6", MySqlDbType.DateTime).Value = entity.LeaderboardLatestMessageId;
-                        cmd.Parameters.Add("@param7", MySqlDbType.VarChar).Value = entity.LeaderboardTitle.Substring(0, 50);
+                        cmd.Parameters.Add("@param6", MySqlDbType.UInt64).Value = entity.LeaderboardLatestMessageId;
+                        cmd.Parameters.Add("@param7", MySqlDbType.VarChar).Value = entity.LeaderboardTitle.Length > 50 ?
+                                                                                   entity.LeaderboardTitle.Substring(0, 50) : entity.LeaderboardTitle;
+
                         cmd.Parameters.Add("@param8", MySqlDbType.DateTime).Value = DateTime.Now;
 
                         cmd.CommandType = CommandType.Text;
