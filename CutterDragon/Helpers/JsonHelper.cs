@@ -10,6 +10,31 @@ namespace CutterDragon.Helpers
     public static class JsonHelper
     {
         /// <summary>
+        /// Try Serialize To File
+        /// </summary>    
+        public static bool TrySerializeToFile<T>(T obj, string path)
+        {
+            bool result = false;
+
+            string json;
+            if (TrySerialize<T>(obj, out json))
+            {
+                try
+                {
+                    File.WriteAllText(path, json);
+                    result = true;
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+
+
+            return result;
+        }
+
+        /// <summary>
         /// Serialize
         /// </summary>
         public static bool TrySerialize<T>(T obj, out string json)
