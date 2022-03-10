@@ -1,4 +1,5 @@
 ﻿using CutterBotCS.Discord;
+using CutterBotCS.Modules.Riot.History;
 using CutterBotCS.RiotAPI;
 using CutterBotCS.Worker;
 using Discord.Commands;
@@ -17,6 +18,8 @@ namespace CutterBotCS.Modules.Riot
         /// Riot Command Handler
         /// </summary>
         private RiotCommandHandler m_RiotCommandHandler { get; set; }
+
+
 
         /// <summary>
         /// Constructor
@@ -86,6 +89,7 @@ namespace CutterBotCS.Modules.Riot
                     // where the message came from
                     model.Value.GuildId = Context.Guild.Id;
                     model.Value.HistoryTextChannelId = Context.Channel.Id;
+                    model.Value.UserSentHistoryMessageId = Context.Message.Id;
                     model.Value.HistoryMessageId = usermessage.Id;
                     model.Value.Timestamp = DateTime.Now;
 
@@ -93,7 +97,7 @@ namespace CutterBotCS.Modules.Riot
                 }
                 else
                 {
-                    await ReplyAsync("Error occured please contact CutterHealer#001");
+                    await ReplyAsync("You do not have a player registed!");
                 }
             }
 
@@ -110,9 +114,16 @@ namespace CutterBotCS.Modules.Riot
                 {
                     try
                     {
-                        var embedbuilder = await m_RiotCommandHandler.GetMatch(model.MatchIds[matchnumber - 1], model.RegionalRoute);
-       
-                        await ReplyAsync(embed: embedbuilder.Build());
+                        string path = string.Format(ProgramConstants.RESOURCE_IMAGES_DIR + @"/{0}.png", Context.User.Id);
+
+                        if (await m_RiotCommandHandler.GetMatch(model.MatchIds[matchnumber - 1], model.RegionalRoute, path))
+                        {
+                            await Context.Channel.SendFileAsync(path);
+                        }
+                        else
+                        {
+                            await ReplyAsync("error creating match selector please contact CutterHealer#0001");
+                        }
                     }
                     catch (Exception e)
                     {

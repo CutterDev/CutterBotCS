@@ -13,81 +13,6 @@ namespace CutterDragon
     /// </summary>
     public class CutterDragonWorker
     {
-        /// <summary>
-        /// Cutter Dragon Dir
-        /// </summary>
-        public static string CUTTERDRAGON_DIR
-        {
-            get
-            {
-                return @"/home/pi/CutterBot/CutterDragon";
-            }
-        }
-
-        /// <summary>
-        /// Champion Directory
-        /// </summary>
-        public static string CHAMPION_DIR
-        {
-            get
-            { return CUTTERDRAGON_DIR + "/Champions"; }
-        }
-
-        /// <summary>
-        /// Champion Icons Directory
-        /// </summary>
-        public static string CHAMPION_ICONS_DIR
-        {
-            get
-            {
-                return CHAMPION_DIR + "/Icons";
-            }
-        }
-
-        /// <summary>
-        /// Champion Json Directory
-        /// </summary>
-        public static string CHAMPION_JSON_DIR
-        {
-            get
-            {
-                return CHAMPION_DIR + "/ChampsJsonFiles";
-            }
-        }
-
-        /// <summary>
-        /// Assets Directory
-        /// </summary>
-        public static string ASSETS_DIR
-        {
-            get
-            {
-                return CUTTERDRAGON_DIR + "/Assets";
-            }
-        }
-
-        /// <summary>
-        /// Assets Items Directory
-        /// </summary>
-        public static string ASSETS_ITEMS_DIR
-        {
-            get
-            {
-                return ASSETS_DIR + "/Items";
-            }
-        }
-
-        /// <summary>
-        /// Assets Runes Directory
-        /// </summary>
-        public static string ASSETS_RUNES_DIR
-        {
-            get
-            {
-                return ASSETS_DIR + "/Runes";
-            }
-        }
-
         #region CDragon URLS
 
         public const string LOL_GAME_PATH = "/lol-game-data/assets/";
@@ -163,25 +88,25 @@ namespace CutterDragon
         private void CreateDirectories()
         {
             // DATA DIR
-            CreateDirectory(CUTTERDRAGON_DIR);
+            CreateDirectory(CutterDragonConsts.CUTTERDRAGON_DIR);
 
             // Champions Directory
-            CreateDirectory(CHAMPION_DIR);
+            CreateDirectory(CutterDragonConsts.CHAMPION_DIR);
 
             // Champion Icons Directory
-            CreateDirectory(CHAMPION_ICONS_DIR);
+            CreateDirectory(CutterDragonConsts.CHAMPION_ICONS_DIR);
 
             // Champion Json Files Directory
-            CreateDirectory(CHAMPION_JSON_DIR);
+            CreateDirectory(CutterDragonConsts.CHAMPION_JSON_DIR);
 
             // Asset Directory
-            CreateDirectory(ASSETS_DIR);
+            CreateDirectory(CutterDragonConsts.ASSETS_DIR);
 
             // Asset Icons Dir
-            CreateDirectory(ASSETS_ITEMS_DIR);
+            CreateDirectory(CutterDragonConsts.ASSETS_ITEMS_DIR);
 
             // Asset Runes Dir
-            CreateDirectory(ASSETS_RUNES_DIR);
+            CreateDirectory(CutterDragonConsts.ASSETS_RUNES_DIR);
         }
 
         /// <summary>
@@ -228,7 +153,7 @@ namespace CutterDragon
                 {
                     var json = wc.DownloadString(CDATA_CHAMPIONSUMMARYJSON);
 
-                    File.WriteAllText(Path.Combine(CHAMPION_DIR, "champions.json"), json);
+                    File.WriteAllText(Path.Combine(CutterDragonConsts.CHAMPION_DIR, "champions.json"), json);
 
                     result = !string.IsNullOrWhiteSpace(json) && JsonHelper.TryDeserialize(json, out champions);
                 }
@@ -253,7 +178,7 @@ namespace CutterDragon
                 string cdatapath = CDATA_ASSET_PATH + lolpath;
                 using (WebClient client = new WebClient())
                 {
-                    string iconpath = Path.Combine(CHAMPION_JSON_DIR, string.Format("{0}.png", champion.Id));
+                    string iconpath = Path.Combine(CutterDragonConsts.CHAMPION_ICONS_DIR, string.Format("{0}.png", champion.Id));
                     client.DownloadFile(new Uri(cdatapath), iconpath);
                 }
             }
@@ -272,7 +197,8 @@ namespace CutterDragon
             {
                 using (WebClient client = new WebClient())
                 {
-                    client.DownloadFile(new Uri(string.Format(CDATA_CHAMPIONJSON, championid)), Path.Combine(CHAMPION_JSON_DIR, string.Format("{0}.json", championid)));
+                    client.DownloadFile(new Uri(string.Format(CDATA_CHAMPIONJSON, championid)), 
+                                        Path.Combine(CutterDragonConsts.CHAMPION_JSON_DIR, string.Format("{0}.json", championid)));
                 }
             }
             catch (Exception e)
@@ -302,7 +228,7 @@ namespace CutterDragon
 
             if (champsumm != null)
             {
-                string path = Path.Combine(CHAMPION_JSON_DIR, string.Format("{0}.json", champsumm.Id));
+                string path = Path.Combine(CutterDragonConsts.CHAMPION_JSON_DIR, string.Format("{0}.json", champsumm.Id));
                 ChampionInfo champinfo;
                 result = JsonHelper.DeserializeFromFile(path, out champinfo);
 
@@ -344,7 +270,7 @@ namespace CutterDragon
             bool result = false;
 
             itemsummaries = null;
-            string itemjsonfile = Path.Combine(ASSETS_DIR, "items.json");
+            string itemjsonfile = Path.Combine(CutterDragonConsts.ASSETS_DIR, "items.json");
 
             try
             {
@@ -379,7 +305,7 @@ namespace CutterDragon
                 {
                     using (WebClient client = new WebClient())
                     {
-                        client.DownloadFile(new Uri(cdataitempath), Path.Combine(ASSETS_ITEMS_DIR, string.Format("{0}.png", iconid)));
+                        client.DownloadFile(new Uri(cdataitempath), Path.Combine(CutterDragonConsts.ASSETS_ITEMS_DIR, string.Format("{0}.png", iconid)));
                     }
                 }
                 catch(Exception e)
@@ -412,7 +338,7 @@ namespace CutterDragon
             bool result = false;
 
             perkstyles = null;
-            string itemjsonfile = Path.Combine(ASSETS_DIR, "stats.json");
+            string itemjsonfile = Path.Combine(CutterDragonConsts.ASSETS_DIR, "stats.json");
 
             try
             {

@@ -23,5 +23,9 @@ namespace CutterBotCS.Modules.Simple
         [Command("dn")]
         [Summary("???")] // Deez Nuts
         public Task DNAsync() => ReplyAsync("https://tenor.com/view/testing-new-deez-nuts-ha-teeth-gif-15758045");
+
+        [Command ("Lailai")]
+        [Summary("Sherveens dumbass thingy")]
+        public Task LailaiAsync() => ReplyAsync("https://tenor.com/view/hello-there-private-from-penguins-of-madagascar-hi-wave-hey-there-gif-16043627");
     }
 }

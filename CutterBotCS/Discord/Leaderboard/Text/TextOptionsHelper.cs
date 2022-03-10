@@ -52,4 +52,14 @@ namespace CutterBotCS.Discord
         Right,
         Center
     }
+
+    /// <summary>
+    /// Vertical Text Alignment
+    /// </summary>
+    public enum VerticalTextAlignment
+    {
+        Top,
+        Center,
+        Bottom
+    }
 }

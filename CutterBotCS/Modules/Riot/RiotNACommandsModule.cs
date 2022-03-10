@@ -52,7 +52,7 @@ namespace CutterBotCS.Modules.Riot
             }
             else
             {
-                await ReplyAsync("Error occured please contact CutterHealer#001");
+                await ReplyAsync("Error occured please contact CutterHealer#0001");
             }
         }
 

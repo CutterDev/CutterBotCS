@@ -70,9 +70,14 @@ namespace CutterBotCS.Discord
                             {
                                 SocketTextChannel stc = guild.GetTextChannel(model.HistoryTextChannelId);
 
-                                if (stc != null)
+                                if (stc != null && model.HistoryMessageId > 0)
                                 {
                                     stc.DeleteMessageAsync(model.HistoryMessageId);
+                                }
+
+                                if (stc != null && model.UserSentHistoryMessageId > 0)
+                                {
+                                    stc.DeleteMessageAsync(model.UserSentHistoryMessageId);
                                 }
                             }
                         }

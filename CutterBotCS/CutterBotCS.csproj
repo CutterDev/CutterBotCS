@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Modules\Riot\RiotRegisteredPlayerCommandsModule.cs~RF16fba0f.TMP" />
     <None Remove="Resources\Fonts\boldfont.otf" />
     <None Remove="Resources\Fonts\boldfont.ttf" />
     <None Remove="Resources\Fonts\bolditalicfont.otf" />

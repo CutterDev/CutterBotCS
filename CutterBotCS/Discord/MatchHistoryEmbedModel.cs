@@ -38,6 +38,10 @@ namespace CutterBotCS.Discord
         /// </summary>
         public ulong GuildId { get; set; }
  
+        /// <summary>
+        /// The message the user sent to get history (!history)
+        /// </summary>
+        public ulong UserSentHistoryMessageId { get; set; }
 
         /// <summary>
         /// Keep Track of the History Message Id to delete

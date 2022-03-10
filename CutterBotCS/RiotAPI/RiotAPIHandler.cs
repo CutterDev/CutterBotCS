@@ -87,7 +87,10 @@ namespace CutterBotCS.RiotAPI
             }
             catch (Exception e)
             {
-                DiscordWorker.Log(string.Format("Error Getting Match5V: {0}", e.Message), LogType.Error);
+                DiscordWorker.Log(string.Format("Error Getting Match5V:\r\n " +
+                                                "Error: {0} \r\n" +
+                                                "Region: {1} \r\n" +
+                                                "MatchId: {2} \r\n", e.Message, rr, matchid), LogType.Error);
             }
 
             return match;

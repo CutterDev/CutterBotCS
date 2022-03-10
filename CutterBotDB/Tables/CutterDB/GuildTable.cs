@@ -38,7 +38,7 @@ namespace CutterDB.Tables
             }
             catch (Exception e)
             {
-                message = string.Format("Error Connecting to Match History Table SQL: {0}", e.Message);
+                message = string.Format("Error Connecting to guilds Table SQL: {0}", e.Message);
             }
         }
 

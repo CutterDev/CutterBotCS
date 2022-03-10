@@ -134,12 +134,11 @@ namespace CutterBotCS.Discord
         /// </summary>
         public async Task<ulong> SendLeaderboard(List<LeaderboardEntry> entries, SocketTextChannel channel, string id, string leaderboardtitle)
         {
-            string image = string.Format("/home/pi/CutterBot/Resources/Images/{0}.png", id);
+            string image = string.Format(ProgramConstants.RESOURCE_IMAGES_DIR + "/{0}.png", id);
 
             if (m_Creator == null)
             {
                 m_Creator = new LeaderboardCreator();
-                m_Creator.Initialize();
             }
 
             RestUserMessage rest = null;

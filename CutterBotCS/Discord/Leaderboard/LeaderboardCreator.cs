@@ -7,6 +7,7 @@ using SixLabors.Fonts;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Drawing.Processing;
 using CutterBotCS.Worker;
+using CutterBotCS.Imaging;
 
 namespace CutterBotCS.Discord
 {
@@ -16,7 +17,6 @@ namespace CutterBotCS.Discord
     public class LeaderboardCreator
     {
         TextOptionsHelper m_TextOptionsHelper;
-        FontCollection m_FontCollection;
         Rgba64 BACKGROUND = new Rgba64(39064, 49858, 60395, 65535);
 
         float POS_X_SIZE = 60;
@@ -31,34 +31,12 @@ namespace CutterBotCS.Discord
 
         RendererOptions m_Options;
 
-        const string IMAGES_DIR = "/home/pi/CutterBot/Resources/Images/";
-        const string FONTS_DIR = "/home/pi/CutterBot/Resources/Fonts/";
-
         /// <summary>
         /// Ctor
         /// </summary>
         public LeaderboardCreator()
         {
             m_TextOptionsHelper = new TextOptionsHelper();  
-        }
-
-        /// <summary>
-        /// Initialize
-        /// </summary>
-        public void Initialize()
-        {
-            m_FontCollection = new FontCollection();
-            try
-            {
-                m_FontCollection.Install(FONTS_DIR + "boldfont.ttf");
-                m_FontCollection.Install(FONTS_DIR + "bolditalicfont.ttf");
-                m_FontCollection.Install(FONTS_DIR + "regularitalicfont.ttf");
-                m_FontCollection.Install(FONTS_DIR + "regularfont.ttf");
-            }
-            catch(Exception e)
-            {
-                DiscordWorker.Log(string.Format("LeaderboardError Installing Fonts: {0}", e.Message), LogType.Error);
-            }            
         }
 
         /// <summary>
@@ -74,7 +52,7 @@ namespace CutterBotCS.Discord
             if (leagueentries.Count > 0)
             {
                 FontFamily defaultfamilyfont;
-                if (m_FontCollection.TryFind("Roboto", out defaultfamilyfont))
+                if (ImagingHelper.Instance.FontCollection.TryFind("Roboto", out defaultfamilyfont))
                 {
                     try
                     {
@@ -89,7 +67,7 @@ namespace CutterBotCS.Discord
                             };
 
                             // Logo
-                            string logopath = string.Format(IMAGES_DIR + "{0}_L1.png", id);
+                            string logopath = string.Format(ProgramConstants.RESOURCE_IMAGES_DIR + "/{0}_L1.png", id);
                             if (File.Exists(logopath))
                             {
                                 using (Image logo = Image.Load(logopath))
@@ -102,7 +80,7 @@ namespace CutterBotCS.Discord
                             }
 
                             // Logo 2
-                            string logo2path = string.Format(IMAGES_DIR + "{0}_L2.png", id);
+                            string logo2path = string.Format(ProgramConstants.RESOURCE_IMAGES_DIR + "/{0}_L2.png", id);
                             if (File.Exists(logo2path))
                             {
                                 using (Image logo = Image.Load(logo2path))
