@@ -48,6 +48,7 @@ namespace CutterBotCS.Modules.Riot
                             InsertMatchToDatabase(matchhistorytable, participanttable, perkstable, match, region);
                         }              
                     }
+                    DiscordWorker.Log(dberror, LogType.Error);
 
                     matches.Add(match);
                 }
@@ -92,9 +93,6 @@ namespace CutterBotCS.Modules.Riot
             }
 
             DiscordWorker.Log(dberror, LogType.Error);
-
-
-
             result = !string.IsNullOrWhiteSpace(dberror);
 
             return result;
@@ -109,7 +107,6 @@ namespace CutterBotCS.Modules.Riot
             bool result = false;
             match = null;
             string dberror;
-            string connstring = Properties.Settings.Default.LeagueDBConn;
 
             MatchEntity entity;
             if (matchtable.TryGetEntity(matchid, region, out entity, out dberror))
@@ -140,7 +137,6 @@ namespace CutterBotCS.Modules.Riot
             }
 
             DiscordWorker.Log(dberror, LogType.Error);
-
             return result;
         }
 

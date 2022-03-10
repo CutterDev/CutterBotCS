@@ -10,7 +10,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CutterBotCS\CutterBotCS.csproj" />
     <ProjectReference Include="..\CutterDragon\CutterDragon.csproj" />
   </ItemGroup>
 

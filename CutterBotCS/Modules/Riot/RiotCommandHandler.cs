@@ -1,5 +1,8 @@
 ﻿using Camille.Enums;
+using Camille.RiotGames.MatchV5;
 using Camille.RiotGames.SummonerV4;
+using CutterBotCS.Discord;
+using CutterBotCS.Modules.Riot.History;
 using CutterBotCS.RiotAPI;
 using CutterBotCS.Worker;
 using CutterDB.Entities;
@@ -20,103 +23,175 @@ namespace CutterBotCS.Modules.Riot
         private RiotAPIHandler m_RiotAPIHandler;
 
         /// <summary>
+        /// History Match Image Creator
+        /// </summary>
+        private HistoryCreator m_HistoryMatchCreator { get; set; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public RiotCommandHandler(RiotAPIHandler handler)
         {
             m_RiotAPIHandler = handler;
+            m_HistoryMatchCreator = new HistoryCreator();
         }
 
         /// <summary>
         /// Get registered player's 10 most recent ranked games
         /// </summary>
-        public async Task<EmbedBuilder> GetRegisteredPlayerHistoryAsync(ulong discordid, ulong guildid)
+        public async Task<KeyValuePair<ulong, MatchHistoryEmbedModel>> GetRegisteredPlayerHistoryAsync(ulong discordid, ulong guildid)
         {
-            var embed = new EmbedBuilder();
+            MatchHistoryEmbedModel model = null;
+
 
             PlayerEntity entity;
             string playerserror;
 
             PlayersTable pt = new PlayersTable();
             pt.OpenConnection(Properties.Settings.Default.BotDBConn, out playerserror);
+            DiscordWorker.Log(playerserror, LogType.Error);
 
             if (pt.TryGetPlayer(guildid, discordid, out entity, out playerserror))
             {
-                embed.Title = entity.SummonerName;
-                embed.Description = "Top 10 most recent ranked games";
-                List<string> matches = await m_RiotAPIHandler.GetRankedHistoryByNameAsync(entity.SummonerName, (PlatformRoute)entity.PlatformRoute, (RegionalRoute)entity.RegionalRoute);
+                model = await GetEmbedMatchModel(entity.SummonerName, (PlatformRoute)entity.PlatformRoute, (RegionalRoute)entity.RegionalRoute);
+            }
 
-                int count = 1;
-                
-                if (matches != null && matches.Count > 0)
+            DiscordWorker.Log(playerserror, LogType.Error);
+
+            pt.CloseConnection(out playerserror);
+            DiscordWorker.Log(playerserror, LogType.Error);
+            return new KeyValuePair<ulong, MatchHistoryEmbedModel>(discordid, model);
+        }
+
+        /// <summary>
+        /// Get Match as Embed
+        /// </summary>
+        public async Task<bool> GetMatch(string matchid, RegionalRoute rr, string path)
+        {
+            bool result = false;
+
+            Match match = await m_RiotAPIHandler.GetMatchFromMatchIdAsync(rr, matchid);
+
+            if (match != null)
+            {
+                try
                 {
-                    foreach (string match in matches)
+                    HistoryMatchModel model = new HistoryMatchModel();
+
+                    model.GameTime = match.Info.GameEndTimestamp.HasValue ? TimeSpan.FromSeconds(match.Info.GameDuration) : TimeSpan.FromMilliseconds(match.Info.GameDuration);
+                    model.GameDate = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(match.Info.GameCreation).ToLocalTime();
+
+                    model.RankType = match.Info.QueueId == Queue.SUMMONERS_RIFT_5V5_RANKED_SOLO ? "Ranked Solo/Duo" : "Ranked Flex";
+
+                    foreach (var p in match.Info.Participants)
                     {
-                        embed.AddField("Match " + count, match);
-
-                        count++;
+                        if (p.TeamId == Camille.RiotGames.Enums.Team.Blue)
+                        {
+                            model.Team1[GetLaneNumber(p.TeamPosition)] = p;
+                        }
+                        else if (p.TeamId == Camille.RiotGames.Enums.Team.Red)
+                        {
+                            model.Team2[GetLaneNumber(p.TeamPosition)] = p;
+                        }
                     }
+
+                    foreach (var t in match.Info.Teams)
+                    {
+                        if (t.TeamId == Camille.RiotGames.Enums.Team.Blue)
+                        {
+                            model.Team1Info = t;
+                            if (t.Win)
+                            {
+                                model.VictoryTeam = t.TeamId;
+                            }
+                        }
+                        else if (t.TeamId == Camille.RiotGames.Enums.Team.Red)
+                        {
+                            model.Team2Info = t;
+                            if (t.Win)
+                            {
+                                model.VictoryTeam = t.TeamId;
+                            }
+                        }
+
+
+                    }
+
+                    result = m_HistoryMatchCreator.TryCreateMatchHistoryImage(model, path);
                 }
-                else
+                catch (Exception e)
                 {
-                    embed.AddField("ERROR GETTING MATCH", "ERROR");
+                    DiscordWorker.Log(string.Format("Error Creating History Model: {0}", e.Message), LogType.Error);
                 }
+            }
+
+            return result;
+        }
+
+        private int GetLaneNumber(string teamposition)
+        {
+            int lane;
+
+            switch (teamposition.ToUpper())
+            {
+                case "TOP":
+                    lane = 0;
+                    break;
+                case "JUNGLE":
+                    lane = 1;
+                    break;
+                case "MIDDLE":
+                    lane = 2;
+                    break;
+                case "BOTTOM":
+                    lane = 3;
+                    break;
+                case "UTILITY":
+                    lane = 4;
+                    break;
+                default:
+                    lane = -1;
+                    break;
+            }
+
+            return lane;
+        }
+
+        /// <summary>
+        /// Get Embed Match Model
+        /// </summary>
+        public async Task<MatchHistoryEmbedModel> GetEmbedMatchModel(string summonername, PlatformRoute pr, RegionalRoute rr)
+        {
+            MatchHistoryEmbedModel model = new MatchHistoryEmbedModel()
+            {
+                Embed = new EmbedBuilder()
+            };
+
+            model.Embed.Title = summonername;
+            model.Embed.Description = "Top 10 most recent ranked games";
+            Dictionary<string, string> matches = await m_RiotAPIHandler.GetRankedHistoryByNameAsync(summonername, pr, rr);
+
+            int count = 0;
+
+            if (matches != null && matches.Count > 0)
+            {
+                foreach (KeyValuePair<string, string> match in matches)
+                {
+                    model.MatchIds[count] = match.Key;
+                    model.Embed.AddField("Match " + (count + 1), match.Value);
+
+                    count++;
+                }
+
+                model.RegionalRoute = rr;
+                model.Embed.Footer = new EmbedFooterBuilder() { Text = "Select a match to view! e.g. !selectmatch 1" };
             }
             else
             {
-                embed.Description = "Player does not have a Summoner Registered";
+                model.Embed.AddField("ERROR GETTING MATCH", "ERROR");
             }
-            pt.CloseConnection(out playerserror);
 
-            return embed;
-        }
-
-        /// <summary>
-        /// Get 10 most recent ranked games for a Summoner
-        /// </summary>
-        public async Task<List<string>> GetMatchHistoryEmbedAsync(string name, PlatformRoute pr, RegionalRoute rr)
-        {
-            List<string> matches = new List<string>();
-
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                List<string> history = await m_RiotAPIHandler.GetRankedHistoryByNameAsync(name, pr, rr);
-                if (history != null && history.Count > 0)
-                {
-                    foreach (string match in history)
-                    {
-                        matches.Add(match);
-                    }
-
-                }
-            }
-            return matches;
-        }
-
-        /// <summary>
-        /// Get 10 most recent ranked games for a Summoner
-        /// </summary>
-        public async Task<string> GetMatchHistoryAsync(string name, PlatformRoute pr, RegionalRoute rr)
-        {
-            StringBuilder message = new StringBuilder();
-
-            message.Append("No Match History for this Summoner found try again.");
-
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                List<string> history = await m_RiotAPIHandler.GetRankedHistoryByNameAsync(name, pr, rr);
-                if (history != null && history.Count > 0)
-                {
-                    message.Clear();
-                    message.AppendLine(string.Format("== {0} 10 Most Recent Ranked Games ==", name));
-                    foreach (string match in history)
-                    {
-                        message.AppendLine(match);
-                    }
-
-                }
-            }
-            return message.ToString();
+            return model;
         }
 
         /// <summary>
@@ -198,49 +273,75 @@ namespace CutterBotCS.Modules.Riot
         {
             string message = string.Empty;
 
-            Summoner summoner = null;
-            try
-            {
-                summoner = await m_RiotAPIHandler.GetSummonerAsync(pr, name);
-            }
-            catch(Exception e)
-            {
-                DiscordWorker.Log(string.Format("Error getting summoner: {0}", e.Message), LogType.Error);
-            }
+            string playerserror;
+            PlayersTable pt = new PlayersTable();
+            pt.OpenConnection(Properties.Settings.Default.BotDBConn, out playerserror);
+            DiscordWorker.Log(playerserror, LogType.Error);
 
-            if (summoner != null)
+            // Check if player already exists in database
+            if (!pt.PlayerExists(guildid, discordid, out playerserror))
             {
-                PlayerEntity entity = new PlayerEntity()
+                // Make sure no error occured before proceeding
+                if (string.IsNullOrWhiteSpace(playerserror))
                 {
-                    DiscordId = discordid,
-                    GuildId = guildid,
-                    SummonerName = summoner.Name,
-                    PlatformRoute = (int)pr,
-                    RegionalRoute = (int)rr
-                };
+                    Summoner summoner = null;
 
-                string playerserror;
-                PlayersTable pt = new PlayersTable();
-                pt.OpenConnection(Properties.Settings.Default.BotDBConn, out playerserror);
-                DiscordWorker.Log(playerserror, LogType.Error);
-                if (pt.InsertPlayer(entity, out playerserror))
-                {
-                    message = string.Format("Registered {0}!", summoner.Name);
+                    // Get Summoner
+                    try
+                    {
+                        summoner = await m_RiotAPIHandler.GetSummonerBySummonerNameAsync(pr, name);
+                    }
+                    catch (Exception e)
+                    {
+                        DiscordWorker.Log(string.Format("Error getting summoner: {0}", e.Message), LogType.Error);
+                    }
+
+                    if (summoner != null)
+                    {
+                        // Create Entity for Database
+                        PlayerEntity entity = new PlayerEntity()
+                        {
+                            DiscordId = discordid,
+                            GuildId = guildid,
+                            SummonerName = summoner.Name,
+                            PlatformRoute = (int)pr,
+                            RegionalRoute = (int)rr
+                        };
+
+                        // Insert Player into Database
+                        if (pt.InsertPlayer(entity, out playerserror))
+                        {
+                            message = string.Format("Registered {0}!", summoner.Name);
+                        }
+                        else
+                        {
+                            message = "Error has occured Contact CutterHealer#0001";
+                        }
+                        DiscordWorker.Log(playerserror, LogType.Error);
+
+                        pt.CloseConnection(out playerserror);
+                        DiscordWorker.Log(playerserror, LogType.Error);
+                    }
+                    else
+                    {
+                        message = "Summoner could not be found.";
+                    }
                 }
                 else
                 {
                     message = "Error has occured Contact CutterHealer#0001";
                 }
-                DiscordWorker.Log(playerserror, LogType.Error);
-
-                pt.CloseConnection(out playerserror);
-                DiscordWorker.Log(playerserror, LogType.Error);
             }
             else
             {
-                message = "Summoner could not be found.";
+                DiscordWorker.Log(playerserror, LogType.Error);
+                message = "You already have a player registered!";
+
+                if (!string.IsNullOrWhiteSpace(playerserror))
+                {
+                    message += " ERROR OCCURED! Contact CutterHealer#0001";
+                }
             }
-            
 
             return message;
         }
@@ -255,8 +356,13 @@ namespace CutterBotCS.Modules.Riot
             pt.OpenConnection(Properties.Settings.Default.BotDBConn, out playerserror);
             DiscordWorker.Log(playerserror, LogType.Error);
 
-            string result = pt.RemovePlayer(guildid, discordid, out playerserror) ? "Summoner has been removed!" : "Error has occured Contact CutterHealer#0001";
+            string result = pt.RemovePlayer(guildid, discordid, out playerserror) ? "Summoner has been removed!" : "You do not have a player registed!";
             DiscordWorker.Log(playerserror, LogType.Error);
+
+            if (!string.IsNullOrWhiteSpace(playerserror))
+            {
+                result += " ERROR OCCURED! Contact CutterHealer#0001";
+            }
 
             pt.CloseConnection(out playerserror);
             DiscordWorker.Log(playerserror, LogType.Error);

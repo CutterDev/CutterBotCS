@@ -42,7 +42,7 @@ namespace CutterBotCS.RiotAPI
         /// <summary>
         /// Get Summoner 
         /// </summary>
-        public async Task<Summoner> GetSummonerAsync(PlatformRoute pr, string summonername)
+        public async Task<Summoner> GetSummonerBySummonerNameAsync(PlatformRoute pr, string summonername)
         {
             Summoner summ  = null;
             try
@@ -87,7 +87,10 @@ namespace CutterBotCS.RiotAPI
             }
             catch (Exception e)
             {
-                DiscordWorker.Log(string.Format("Error Getting Match5V: {0}", e.Message), LogType.Error);
+                DiscordWorker.Log(string.Format("Error Getting Match5V:\r\n " +
+                                                "Error: {0} \r\n" +
+                                                "Region: {1} \r\n" +
+                                                "MatchId: {2} \r\n", e.Message, rr, matchid), LogType.Error);
             }
 
             return match;
@@ -100,7 +103,7 @@ namespace CutterBotCS.RiotAPI
         {
             List<string> champions = new List<string>();
 
-            var summoner = await GetSummonerAsync(pr, summonername);
+            var summoner = await GetSummonerBySummonerNameAsync(pr, summonername);
 
             if (summoner != null)
             {
@@ -144,7 +147,7 @@ namespace CutterBotCS.RiotAPI
                 LeaderboardEntry lentry = null;
                 if(!string.IsNullOrWhiteSpace(player.SummonerName))
                 {
-                    Summoner summoner = await GetSummonerAsync(player.PlatformRoute, player.SummonerName);
+                    Summoner summoner = await GetSummonerBySummonerNameAsync(player.PlatformRoute, player.SummonerName);
 
                     if (summoner != null)
                     {
@@ -224,12 +227,13 @@ namespace CutterBotCS.RiotAPI
         /// <summary>
         /// Get Ranked History By ID Async
         /// </summary>
-        public async Task<List<string>> GetRankedHistoryByIdAsync(string id, PlatformRoute pr, RegionalRoute rr)
+        public async Task<Dictionary<string, string>> GetRankedHistoryByIdAsync(string id, PlatformRoute pr, RegionalRoute rr)
         {
-            List<string> history = null;
+            Dictionary<string, string> history = null;
             Summoner summonerData = null;
 
             summonerData = await GetSummonerByAccountIdAsync(pr, id);
+
             if (summonerData != null)
             {
                 history = await GetRankedHistoryAsync(rr, summonerData);
@@ -241,11 +245,11 @@ namespace CutterBotCS.RiotAPI
         /// <summary>
         /// Get Ranked History Asynchronous
         /// </summary>
-        public async Task<List<string>> GetRankedHistoryByNameAsync(string summonername, PlatformRoute pr, RegionalRoute rr)
+        public async Task<Dictionary<string, string>> GetRankedHistoryByNameAsync(string summonername, PlatformRoute pr, RegionalRoute rr)
         {
-            List<string> history = null;
+            Dictionary<string, string> history = null;
 
-            Summoner summonerData = await GetSummonerAsync(pr, summonername);   
+            Summoner summonerData = await GetSummonerBySummonerNameAsync(pr, summonername);   
 
             if (summonerData != null)
             {
@@ -258,9 +262,9 @@ namespace CutterBotCS.RiotAPI
         /// <summary>
         /// Get Ranked History ASync
         /// </summary>
-        async Task<List<string>> GetRankedHistoryAsync(RegionalRoute rr, Summoner summonerdata)
+        async Task<Dictionary<string, string>> GetRankedHistoryAsync(RegionalRoute rr, Summoner summonerdata)
         {
-            List<string> matchhistory = null;
+            Dictionary<string, string> matchhistory = null;
             if (summonerdata != null)
             {
                 // Get 10 most recent matches (blocking)
@@ -294,7 +298,7 @@ namespace CutterBotCS.RiotAPI
                     int count = 1;
                     if (matches != null)
                     {
-                        matchhistory = new List<string>();
+                        matchhistory = new Dictionary<string, string>();
 
                         foreach (Match match in matches)
                         {
@@ -332,7 +336,7 @@ namespace CutterBotCS.RiotAPI
                             string matchhistorymsg = string.Format("{0} - {1,3}) {2,-4} ({3})", gamemode, count, win ? "Win" : "Loss", champ) +
                                                   string.Format("     K/D/A {0}/{1}/{2} ({3:0.00})", kills, deaths, assists, kda);
 
-                            matchhistory.Add(matchhistorymsg);
+                            matchhistory.Add(match.Metadata.MatchId, matchhistorymsg);
 
                             count++;
                         }

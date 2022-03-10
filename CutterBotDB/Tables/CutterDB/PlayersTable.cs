@@ -10,6 +10,8 @@ namespace CutterDB.Tables
     {
         MySqlConnection m_SqlConnection { get; set; }
 
+        const string PLAYER_EXISTS = "SELECT COUNT(*) FROM players WHERE guildid = @param1 AND discordid = @param2";
+
         const string INSERT_PLAYER = "INSERT INTO players VALUES (@param1, @param2, @param3, @param4, @param5)";
 
         const string SELECT_ALL_PLAYERS = "SELECT * FROM players WHERE guildid = @param1";
@@ -72,6 +74,38 @@ namespace CutterDB.Tables
                 {
                     message = string.Format("Error getting Player Entity: {0}", e.Message);
                     entity = null;
+                }
+            }
+
+
+            return result;
+        }
+        
+        /// <summary>
+        /// Player Exists
+        /// </summary>
+        public bool PlayerExists(ulong guildid, ulong discordid, out string message)
+        {
+            bool result = false;
+            message = string.Empty;
+
+            if (m_SqlConnection.State == ConnectionState.Open)
+            {
+                try
+                {
+                    using (MySqlCommand command = new MySqlCommand(PLAYER_EXISTS, m_SqlConnection))
+                    {
+                        command.Parameters.AddWithValue("@param1", guildid);
+                        command.Parameters.AddWithValue("@param2", discordid);
+
+                        long rows = (long)command.ExecuteScalar();
+
+                        result = rows > 0;
+                    }
+                }
+                catch (Exception e)
+                {
+                    message = string.Format("Error checking Player exists: {0}", e.Message);
                 }
             }
 

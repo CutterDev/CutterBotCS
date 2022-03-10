@@ -27,6 +27,8 @@ namespace CutterBotCS.Discord
         private Leaderboard m_Leaderboard;
         private bool m_Initialized;
 
+        public static MessageHandler MessageHandler;
+
         /// <summary>
         /// Ctor
         /// </summary>
@@ -35,6 +37,8 @@ namespace CutterBotCS.Discord
             m_DiscordToken = discordbottoken;
             m_Leaderboard = leaderboard;
             m_Initialized = false;
+
+            MessageHandler = new MessageHandler();
         }
 
         /// <summary>
@@ -63,10 +67,15 @@ namespace CutterBotCS.Discord
 
             m_SocketClient.Log += Log;
             m_SocketClient.Connected += Connected;
-            m_SocketClient.JoinedGuild += BotJoinedGuild;
+            m_SocketClient.JoinedGuild += BotJoinedGuild;  
 
             await m_SocketClient.LoginAsync(TokenType.Bot, m_DiscordToken);
             await m_SocketClient.StartAsync();
+
+            //
+            // Handles Logging Messages
+            //
+            MessageHandler.Initialise(m_SocketClient);
         }
 
         /// <summary>
@@ -142,7 +151,11 @@ namespace CutterBotCS.Discord
                 }
                 else
                 {
-                    entity = new GuildEntity();
+                    entity = new GuildEntity()
+                    {
+                        GuildId = guild.Id,
+                        Prefix = GuildItem.DEFAULT_PREFIX
+                    };
 
                     gt.InsertGuild(entity, out guilderr);
                 }

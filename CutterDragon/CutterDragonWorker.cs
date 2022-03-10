@@ -1,4 +1,5 @@
-﻿using CutterDragon.Champions;
+﻿using CutterDragon.Assets;
+using CutterDragon.Champions;
 using CutterDragon.Helpers;
 using System;
 using System.IO;
@@ -12,16 +13,6 @@ namespace CutterDragon
     /// </summary>
     public class CutterDragonWorker
     {
-        private const string CHAMPION_DIR = "Champions";
-
-        private string CutterData_Dir;
-
-        private string ChampionsDir;
-
-        private string ChampionIconsDir;
-
-        private string ChampionJsonFilesDir;
-
         #region CDragon URLS
 
         public const string LOL_GAME_PATH = "/lol-game-data/assets/";
@@ -31,6 +22,10 @@ namespace CutterDragon
         private const string CDATA_CHAMPIONSUMMARYJSON = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-summary.json";
 
         private const string CDATA_CHAMPIONJSON = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champions/{0}.json";
+
+        private const string CDATA_ITEM_JSON = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/en_gb/v1/items.json";
+
+        private const string CDATA_PERKS_JSON = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/en_gb/v1/perkstyles.json";
 
         #endregion
 
@@ -53,37 +48,65 @@ namespace CutterDragon
         }
 
         /// <summary>
+        /// Get Assets
+        /// </summary>
+        public void GetAssets()
+        {
+            GetChampionAssets();
+
+            GetItemAssets();
+
+            GetPerkStyleAssets();
+        }
+
+        /// <summary>
+        /// Get Champion Assets
+        /// 
+        /// </summary>
+        private void GetChampionAssets()
+        {
+            ChampionSummary[] champions;
+
+            if (TryGetChampionSummaries(out champions))
+            {
+                for (int i = 0; i < champions.Length; i++)
+                {
+                    var champion = champions[i];
+
+                    // Champion Icons
+                    GrabChampionIcons(champion);
+
+                    // Champion Json
+                    GrabChampionJson(champion.Id);
+                }
+            }
+        }
+
+        /// <summary>
         /// Create Directories
         /// </summary>
         private void CreateDirectories()
         {
-            bool noerror = false;
-            try
-            {
-                CutterData_Dir = @"/home/pi/CutterBot/CutterDragon";
-                noerror = true;
-            }
-            catch (Exception e)
-            {
+            // DATA DIR
+            CreateDirectory(CutterDragonConsts.CUTTERDRAGON_DIR);
 
-            }
+            // Champions Directory
+            CreateDirectory(CutterDragonConsts.CHAMPION_DIR);
 
-            if (noerror)
-            {
-                CreateDirectory(CutterData_Dir);
+            // Champion Icons Directory
+            CreateDirectory(CutterDragonConsts.CHAMPION_ICONS_DIR);
 
-                // Champions Directory
-                ChampionsDir = Path.Combine(CutterData_Dir, CHAMPION_DIR);
-                CreateDirectory(ChampionsDir);
+            // Champion Json Files Directory
+            CreateDirectory(CutterDragonConsts.CHAMPION_JSON_DIR);
 
-                // Champion Icons Directory
-                ChampionIconsDir = Path.Combine(ChampionsDir, "Icons");
-                CreateDirectory(ChampionIconsDir);
+            // Asset Directory
+            CreateDirectory(CutterDragonConsts.ASSETS_DIR);
 
-                // Champion Json Files Directory
-                ChampionJsonFilesDir = Path.Combine(ChampionsDir, "ChampsJsonFiles");
-                CreateDirectory(ChampionJsonFilesDir);
-            }
+            // Asset Icons Dir
+            CreateDirectory(CutterDragonConsts.ASSETS_ITEMS_DIR);
+
+            // Asset Runes Dir
+            CreateDirectory(CutterDragonConsts.ASSETS_RUNES_DIR);
         }
 
         /// <summary>
@@ -104,12 +127,13 @@ namespace CutterDragon
             }
         }
 
+        #region Champion Asset Methods
         private void GetChampionSummariesFromFile()
         {
             m_ChampionSummaries = new ChampionSummary[0];
 
             ChampionSummary[] champs;
-            if(TryGetChampionStats(out champs))
+            if (TryGetChampionSummaries(out champs))
             {
                 m_ChampionSummaries = champs;
             }
@@ -118,7 +142,7 @@ namespace CutterDragon
         /// <summary>
         /// Try Get Champion Stats
         /// </summary>
-        private bool TryGetChampionStats(out ChampionSummary[] champions)
+        private bool TryGetChampionSummaries(out ChampionSummary[] champions)
         {
             champions = null;
             bool result = false;
@@ -129,7 +153,7 @@ namespace CutterDragon
                 {
                     var json = wc.DownloadString(CDATA_CHAMPIONSUMMARYJSON);
 
-                    File.WriteAllText(Path.Combine(ChampionsDir, "champions.json"), json);
+                    File.WriteAllText(Path.Combine(CutterDragonConsts.CHAMPION_DIR, "champions.json"), json);
 
                     result = !string.IsNullOrWhiteSpace(json) && JsonHelper.TryDeserialize(json, out champions);
                 }
@@ -154,7 +178,7 @@ namespace CutterDragon
                 string cdatapath = CDATA_ASSET_PATH + lolpath;
                 using (WebClient client = new WebClient())
                 {
-                    string iconpath = Path.Combine(ChampionIconsDir, string.Format("{0}.png", champion.Id));
+                    string iconpath = Path.Combine(CutterDragonConsts.CHAMPION_ICONS_DIR, string.Format("{0}.png", champion.Id));
                     client.DownloadFile(new Uri(cdatapath), iconpath);
                 }
             }
@@ -173,34 +197,13 @@ namespace CutterDragon
             {
                 using (WebClient client = new WebClient())
                 {
-                    client.DownloadFile(new Uri(string.Format(CDATA_CHAMPIONJSON, championid)), Path.Combine(ChampionJsonFilesDir, string.Format("{0}.json", championid)));
+                    client.DownloadFile(new Uri(string.Format(CDATA_CHAMPIONJSON, championid)), 
+                                        Path.Combine(CutterDragonConsts.CHAMPION_JSON_DIR, string.Format("{0}.json", championid)));
                 }
             }
             catch (Exception e)
             {
-
-            }
-        }
-
-        /// <summary>
-        /// Get Assets
-        /// </summary>
-        public void GetAssets()
-        {
-            ChampionSummary[] champions;
-
-            if (TryGetChampionStats(out champions))
-            {
-                for (int i = 0; i < champions.Length; i++)
-                {
-                    var champion = champions[i];
-
-                    // Champion Icons
-                    GrabChampionIcons(champion);
-
-                    // Champion Json
-                    GrabChampionJson(champion.Id);
-                }
+                
             }
         }
 
@@ -214,7 +217,7 @@ namespace CutterDragon
 
             ChampionSummary champsumm = null;
 
-            for(int i = 0; i < m_ChampionSummaries.Length; i++)
+            for (int i = 0; i < m_ChampionSummaries.Length; i++)
             {
                 if (m_ChampionSummaries[i].Name.Equals(championname, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -225,9 +228,9 @@ namespace CutterDragon
 
             if (champsumm != null)
             {
-                string path = Path.Combine(ChampionJsonFilesDir, string.Format("{0}.json", champsumm.Id));
+                string path = Path.Combine(CutterDragonConsts.CHAMPION_JSON_DIR, string.Format("{0}.json", champsumm.Id));
                 ChampionInfo champinfo;
-                result = JsonHelper.DeserializeFromFile(path, out champinfo);             
+                result = JsonHelper.DeserializeFromFile(path, out champinfo);
 
                 if (result)
                 {
@@ -241,6 +244,125 @@ namespace CutterDragon
 
             return result;
         }
+
+        #endregion
+
+        #region Assets Items
+
+        private void GetItemAssets()
+        {
+            ItemSummary[] items;
+
+            if (TryGetItemSummaries(out items))
+            {
+                for(int i = 0; i < items.Length; i++)
+                {
+                    DownloadItemIcon(items[i].IconPath, items[i].Id);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Try Get Item Summaries
+        /// </summary>
+        private bool TryGetItemSummaries(out ItemSummary[] itemsummaries)
+        {
+            bool result = false;
+
+            itemsummaries = null;
+            string itemjsonfile = Path.Combine(CutterDragonConsts.ASSETS_DIR, "items.json");
+
+            try
+            {
+                using (WebClient client = new WebClient())
+                {
+                    client.DownloadFile(new Uri(CDATA_ITEM_JSON), itemjsonfile);
+                }
+
+                if (File.Exists(itemjsonfile))
+                {
+                    result = JsonHelper.DeserializeFromFile(itemjsonfile, out itemsummaries);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(string.Format("Error: {0}", e.Message));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Download Item Icon
+        /// </summary>
+        private void DownloadItemIcon(string itempath, int iconid)
+        {
+            if (!string.IsNullOrWhiteSpace(itempath))
+            {
+                string cdatapath = itempath.Replace(LOL_GAME_PATH, string.Empty).ToLower();
+                string cdataitempath = CDATA_ASSET_PATH + cdatapath;
+                try
+                {
+                    using (WebClient client = new WebClient())
+                    {
+                        client.DownloadFile(new Uri(cdataitempath), Path.Combine(CutterDragonConsts.ASSETS_ITEMS_DIR, string.Format("{0}.png", iconid)));
+                    }
+                }
+                catch(Exception e)
+                {
+
+                }
+            }     
+        }
+
+        #region PerkStyles (Runes)
+
+        /// <summary>
+        /// Get Runes
+        /// </summary>
+        private void GetPerkStyleAssets()
+        {
+            PerkStyle[] perkstyles;
+
+            if (GetPerkStyles(out perkstyles))
+            {
+
+            }
+        }
+
+        /// <summary>
+        /// Get Perk Styles
+        /// </summary>
+        private bool GetPerkStyles(out PerkStyle[] perkstyles)
+        {
+            bool result = false;
+
+            perkstyles = null;
+            string itemjsonfile = Path.Combine(CutterDragonConsts.ASSETS_DIR, "stats.json");
+
+            try
+            {
+                using (WebClient client = new WebClient())
+                {
+                    client.DownloadFile(new Uri(CDATA_PERKS_JSON), itemjsonfile);
+                }
+
+                if (File.Exists(itemjsonfile))
+                {
+                    result = JsonHelper.DeserializeFromFile(itemjsonfile, out perkstyles);
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #endregion
     }
 }
 
