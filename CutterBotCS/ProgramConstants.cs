@@ -1,4 +1,6 @@
-﻿namespace CutterBotCS
+﻿using System;
+
+namespace CutterBotCS
 {
     /// <summary>
     /// Program Constants
@@ -26,5 +28,10 @@
         {
             get { return RESOURCE_DIR + "/Images"; }
         }
+
+        /// <summary>
+        /// EPOCH TIME FOR GAME CREATION TIMES
+        /// </summary>
+        public static DateTime EPOCHTIME = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
     }
 }
