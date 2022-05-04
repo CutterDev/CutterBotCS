@@ -13,6 +13,8 @@ namespace CutterDB.Tables
     {
         MySqlConnection m_SqlConnection { get; set; }
 
+        const string GUILD_EXISTS = "SELECT COUNT(*) FROM guilds where guildid = @param1";
+
         const string INSERT_GUILD = "INSERT INTO guilds VALUES (@param1, @param2, @param3, @param4, @param5, @param6, @param7, @param8)";
 
         const string SELECT_ALL_GUILDS = "SELECT * FROM guilds";
@@ -108,6 +110,36 @@ namespace CutterDB.Tables
                 catch (Exception e)
                 {
                     message = string.Format("Error getting All Guild Entities: {0}", e.Message);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Check Guild Exists in table
+        /// </summary>
+        public bool GuildExists(ulong guildid, out string message)
+        {
+            bool result = false;
+            message = string.Empty;
+
+            if (m_SqlConnection.State == ConnectionState.Open)
+            {
+                try
+                {
+                    using (MySqlCommand command = new MySqlCommand(GUILD_EXISTS, m_SqlConnection))
+                    {
+                        command.Parameters.AddWithValue("@param1", guildid);
+
+                        long rows = (long)command.ExecuteScalar();
+
+                        result = rows > 0;
+                    }
+                }
+                catch (Exception e)
+                {
+                    message = string.Format("Error checking guild exists: {0}", e.Message);
                 }
             }
 

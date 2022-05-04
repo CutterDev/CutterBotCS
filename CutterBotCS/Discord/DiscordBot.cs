@@ -141,7 +141,7 @@ namespace CutterBotCS.Discord
                 GuildItem gi = new GuildItem();
 
                 if (gt.TryGetGuild(guild.Id, out entity, out guilderr))
-                {   
+                {
                     gi.Id = entity.Id;
                     gi.GuildId = entity.GuildId;
                     gi.Prefix = entity.Prefix;
@@ -151,15 +151,24 @@ namespace CutterBotCS.Discord
                 }
                 else
                 {
-                    entity = new GuildEntity()
-                    {
-                        GuildId = guild.Id,
-                        Prefix = GuildItem.DEFAULT_PREFIX
-                    };
+                    gi.GuildId = guild.Id;
+                    gi.Prefix = GuildItem.DEFAULT_PREFIX;
 
-                    gt.InsertGuild(entity, out guilderr);
+                    // Check guild does NOT exist
+                    if (!gt.GuildExists(guild.Id, out guilderr))
+                    {
+                        // enter a new guildentity into table
+                        entity = new GuildEntity()
+                        {
+                            GuildId = guild.Id,
+                            Prefix = GuildItem.DEFAULT_PREFIX
+                        };
+
+                        gt.InsertGuild(entity, out guilderr);
+                    }
                 }
-                DiscordWorker.Log(guilderr, LogType.Error);
+
+                DiscordWorker.Log(guilderr, LogType.Info);
 
                 guildprefixes.Add(gi.GuildId, gi.Prefix);
                 guilds.Add(gi);

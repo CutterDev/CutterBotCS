@@ -86,7 +86,7 @@ namespace CutterBotCS.Modules
                         ulong guildid = textchannel.Guild.Id;
 
                         int argPos = 0;
-
+              
                         if (m_GuildsPrefix.ContainsKey(guildid))
                         {
                             if (!(message.HasCharPrefix(m_GuildsPrefix[guildid], ref argPos) ||
