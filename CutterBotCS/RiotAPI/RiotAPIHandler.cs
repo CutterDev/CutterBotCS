@@ -354,9 +354,15 @@ namespace CutterBotCS.RiotAPI
         {
             List<Match> matches = new List<Match>();
 
-            string region = GetRegionCode(rr);
+            foreach(var matchid in matchlist)
+            {
+                Match match = await GetMatchFromMatchIdAsync(rr, matchid);
 
-            matches = await MatchHistoryDBHandler.GetMatchListAsync(this, matchlist, region, rr);
+                if (match != null)
+                {
+                    matches.Add(match);
+                }
+            }
 
             return matches;
         }
