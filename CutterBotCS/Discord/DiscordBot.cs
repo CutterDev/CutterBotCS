@@ -60,7 +60,8 @@ namespace CutterBotCS.Discord
             var config = new DiscordSocketConfig
             {
                 AlwaysDownloadUsers = false,
-                MessageCacheSize = 100,                   
+                MessageCacheSize = 100,   
+                GatewayIntents = GatewayIntents.None
             };
 
             m_SocketClient = new DiscordSocketClient();
