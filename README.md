@@ -2,7 +2,7 @@
 
 This is my own personal project to run a discord bot on my friends community discord server!
 
-This has been written in C# and a bit of SQL to handle the data beiing stored.
+This has been written in C# and a bit of SQL to handle the data being stored.
 
 Features
 - Allows players to register to the Discord bot.
